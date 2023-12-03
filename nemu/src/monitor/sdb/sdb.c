@@ -2,7 +2,9 @@
 #include <cpu/cpu.h>
 #include <readline/readline.h>
 #include <readline/history.h>
+#include "common.h"
 #include "sdb.h"
+#include "utils.h"
 
 static int is_batch_mode = false;
 
@@ -28,16 +30,60 @@ static char* rl_gets() {
 }
 
 static int cmd_c(char *args) {
-  cpu_exec(-1);
+  //TODO: when n is bigger than MAX_INSTR_TO_PRINT, the instructions will not print
+  cpu_exec(9);
   return 0;
 }
 
-
 static int cmd_q(char *args) {
+  nemu_state.state = NEMU_QUIT;
   return -1;
 }
 
 static int cmd_help(char *args);
+
+static int cmd_si(char *args){
+  //char *arg = strtok(NULL, " ");
+  int step;
+
+  if(args == NULL){
+    step = 1;
+  }
+  else{
+    sscanf(args, "%d", &step);
+  }
+  cpu_exec(step);
+
+  return 0;
+}
+
+static int cmd_info(char *args){
+  if(strcmp(args, "r") == 0){
+    isa_reg_display();
+  }
+  return 0;
+}
+
+#include "memory/vaddr.h"
+static int cmd_x(char* args){
+  char *N = strtok(NULL, " ");
+  char *EXPR = strtok(NULL, " ");
+  int len;
+  vaddr_t address;
+
+  sscanf(N, "%d", &len);
+  sscanf(EXPR, "%x", &address);
+
+  int i;
+  printf("0x%x: ", address);
+  for(i = 0;i<len;i++){
+    printf("0x%x ", vaddr_read(address, 4));
+    address += 4;
+  }
+  printf("\n");
+
+  return 0;
+}
 
 static struct {
   const char *name;
@@ -47,6 +93,9 @@ static struct {
   { "help", "Display informations about all supported commands", cmd_help },
   { "c", "Continue the execution of the program", cmd_c },
   { "q", "Exit NEMU", cmd_q },
+  {"si", "Execute N instructions in once", cmd_si},
+  {"info", "Print value of each register", cmd_info},
+  {"x", "Scan and show N bytes in memory from the address EXPR", cmd_x}
 
   /* TODO: Add more commands */
 
