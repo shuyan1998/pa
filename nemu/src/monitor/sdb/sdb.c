@@ -85,6 +85,23 @@ static int cmd_x(char* args){
   return 0;
 }
 
+static int cmd_p(char* args){
+  if(args == NULL){
+    printf("No parameters\n");
+    return 0;
+  }
+  bool success = true;
+  int num = expr(args, &success);
+  if(success == false){
+    printf("Wrong expression\n");
+    return 0;
+  }
+  else{
+    printf("0x%x %dD\n", num, num);
+    return 0;
+  }
+}
+
 static struct {
   const char *name;
   const char *description;
@@ -95,7 +112,8 @@ static struct {
   { "q", "Exit NEMU", cmd_q },
   {"si", "Execute N instructions in once", cmd_si},
   {"info", "Print value of each register", cmd_info},
-  {"x", "Scan and show N bytes in memory from the address EXPR", cmd_x}
+  {"x", "Scan and show N bytes in memory from the address EXPR", cmd_x},
+  {"p", "Caculate the result of the given expression", cmd_p}
 
   /* TODO: Add more commands */
 
