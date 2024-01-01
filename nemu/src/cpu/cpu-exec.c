@@ -1,8 +1,10 @@
+#include "utils.h"
 #include <cpu/cpu.h>
 #include <cpu/exec.h>
 #include <cpu/difftest.h>
 #include <isa-all-instr.h>
 #include <locale.h>
+#include "sdb.h"
 
 /* The assembly code of instructions executed is only output to the screen
  * when the number of instructions executed is less than this value.
@@ -27,6 +29,8 @@ static void trace_and_difftest(Decode *_this, vaddr_t dnpc) {
 #endif
   if (g_print_step) { IFDEF(CONFIG_ITRACE, puts(_this->logbuf)); }
   IFDEF(CONFIG_DIFFTEST, difftest_step(_this->pc, dnpc));
+
+  IFDEF(CONFIG_WATCHPOINT, wp_difftest());
 }
 
 #include <isa-exec.h>
@@ -117,7 +121,7 @@ void cpu_exec(uint64_t n) {
            (nemu_state.halt_ret == 0 ? ASNI_FMT("HIT GOOD TRAP", ASNI_FG_GREEN) :
             ASNI_FMT("HIT BAD TRAP", ASNI_FG_RED))),
           nemu_state.halt_pc);
-      // fall through
+    // fall through
     case NEMU_QUIT: statistic();
   }
 }

@@ -3,8 +3,8 @@
 #include <readline/readline.h>
 #include <readline/history.h>
 #include "common.h"
-#include "sdb.h"
 #include "utils.h"
+#include "sdb.h"
 
 static int is_batch_mode = false;
 
@@ -61,6 +61,17 @@ static int cmd_info(char *args){
   if(strcmp(args, "r") == 0){
     isa_reg_display();
   }
+  else if(strcmp(args, "w") == 0){
+    wp_iterate();
+  }
+  else{
+    panic("Error: The argument is wrong.");
+  }
+  return 0;
+}
+
+static int cmd_d(char* args){
+  wp_delete(atoi(args));
   return 0;
 }
 
@@ -97,7 +108,24 @@ static int cmd_p(char* args){
     return 0;
   }
   else{
-    printf("0x%x %dD\n", num, num);
+    printf("0x%08x %dD\n", num, num);
+    return 0;
+  }
+}
+
+static int cmd_w(char *args){
+  if(args == NULL){
+    printf("No parameters\n");
+    return 0;
+  }
+  bool success = true;
+  word_t old = expr(args, &success);
+  if(success == false){
+    panic("Error expression");
+    return 0;
+  }
+  else{
+    wp_watch(args, old);
     return 0;
   }
 }
@@ -113,7 +141,9 @@ static struct {
   {"si", "Execute N instructions in once", cmd_si},
   {"info", "Print value of each register", cmd_info},
   {"x", "Scan and show N bytes in memory from the address EXPR", cmd_x},
-  {"p", "Caculate the result of the given expression", cmd_p}
+  {"p", "Caculate the result of the given expression", cmd_p},
+  {"w", "Set watchpoint to watch if the value of the expr changed", cmd_w},
+  {"d", "Delete the watchpoint we set before", cmd_d}
 
   /* TODO: Add more commands */
 

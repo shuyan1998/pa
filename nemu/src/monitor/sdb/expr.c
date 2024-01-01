@@ -1,14 +1,16 @@
+#include "common.h"
 #include <isa.h>
 
 /* We use the POSIX regex functions to process regular expressions.
  * Type 'man regex' for more information about POSIX regex functions.
  */
 #include <regex.h>
+#include "memory/vaddr.h"
 
 enum {
-  TK_NOTYPE = 256, TK_EQ,
+  TK_NOTYPE = 256, 
   /* TODO: Add more token types */
-  TK_DECIMAL, TK_NEG
+  TK_DECIMAL, TK_HEXADECIMAL, TK_REG, TK_NEG, TK_EQ, TK_NE, TK_AND, TK_DEREF
 };
 
 static struct rule {
@@ -21,13 +23,18 @@ static struct rule {
    */
 
   {" +", TK_NOTYPE},    // spaces
+  {"0[xX][0-9a-fA-F]+", TK_HEXADECIMAL},
   {"[0-9]+", TK_DECIMAL},   // one decimal number
+  {"\\$[a-z]*[0-9]*", TK_REG},
   {"\\+", '+'},         // plus
   {"\\-", '-'},         // minus
   {"\\*", '*'},         // multiply
   {"\\/", '/'},         // divide
   {"\\(", '('},        // left parenthesis
   {"\\)", ')'},        // right parethesis
+  {"==", TK_EQ},
+  {"!=", TK_NE},
+  {"&&", TK_AND}
 };
 
 #define NR_REGEX ARRLEN(rules)
@@ -61,6 +68,8 @@ static int nr_token __attribute__((used))  = 0;
 
 int check_parentheses(Token *start, Token *end);
 Token *calc(Token *start, Token *end);
+void check_Negtive(Token *start, Token *end);
+word_t op_Deref(vaddr_t args);
 
 
 static bool make_token(char *e) {
@@ -96,6 +105,11 @@ static bool make_token(char *e) {
           case '(':
           case ')':
           case TK_DECIMAL:
+          case TK_HEXADECIMAL:
+          case TK_REG:
+          case TK_EQ:
+          case TK_NE:
+          case TK_AND:
             tokens[nr_token].type = rules[i].token_type;
             //已知字符串长度的情况下，strncpy比较适用
             strncpy(tokens[nr_token].str, substr_start, substr_len);
@@ -122,13 +136,26 @@ static bool make_token(char *e) {
 int eval(Token *start, Token *end) {
   if (start > end) {
     /* Bad expression */
-    panic("Error Expression");
+    panic("Error Expression, Token start address is greater than the token end.");
   }
   else if (start == end) {
     /* Single token.
      * For now this token should be a number.
      * Return the value of the number.
      */
+     if(start->type == TK_HEXADECIMAL){
+      vaddr_t addr;
+      sscanf(start->str, "%x", &addr);
+      return addr;
+     }
+     else if(start->type == TK_REG){
+      bool flag;
+      word_t reg_value = isa_reg_str2val(start->str, &flag);
+      if(!flag){
+        panic("Error: The register name is not defined.");
+      }
+      return reg_value;
+     }
      return atoi(start->str);
   }
   else if (check_parentheses(start, end) == true) {
@@ -142,17 +169,23 @@ int eval(Token *start, Token *end) {
     int val1=0;
     int val2=0;
     Token *op = calc(start, end);
-    if(op->type != TK_NEG){
+    if(op->type != TK_NEG && op->type != TK_DEREF && op->type != TK_REG){
       val1 = eval(start, op-1);
     }
     val2 = eval(op+1, end);
+
     switch(op->type){
       case '+': return val1 + val2;
       case '-': return val1 - val2;
       case '*': return val1 * val2;
       case '/': return val1 / val2;
       case TK_NEG: return val2*-1;
-      default: panic("Error Expression");
+      case TK_DEREF: return op_Deref(val2);
+      case TK_REG: return val2;
+      case TK_EQ: return val1 == val2;
+      case TK_NE: return val1 != val2;
+      case TK_AND: return val1 && val2;
+      default: panic("Error Expression, the op is not matched any of the rules.");
     }
 
   }
@@ -160,6 +193,7 @@ int eval(Token *start, Token *end) {
 
 Token *calc(Token *start, Token *end){
   int count = 0;
+  // value sign is intended to define the priority of the op
   int sign = 0;
   Token *op = NULL;
 
@@ -183,7 +217,8 @@ Token *calc(Token *start, Token *end){
       op = sim;
       sign = 1;
     }
-    else if(sign == 0 && (sim->type == TK_NEG)){
+    else if(sign == 0 && (sim->type == TK_NEG || sim->type == TK_DEREF || sim->type == TK_REG || 
+            sim->type == TK_EQ || sim->type == TK_NE || sim->type == TK_AND)){
       op = sim;
     }
   }
@@ -191,15 +226,26 @@ Token *calc(Token *start, Token *end){
 }
 
 void check_Negtive(Token *start, Token *end){
-  Token *op = start;
   for(;start<=end;start++){
     if(start->type == '-' && (start-1)->type != TK_DECIMAL && (start-1)->type != ')')
     {
       start->type=TK_NEG;
     }
   }
-  start = op;
   return;
+}
+
+void check_Deref(Token *start, Token *end){
+  for(;start <= end;start++){
+    if(start->type == '*' && (start-1)->type != TK_DECIMAL && (start-1)->type != TK_HEXADECIMAL && (start-1)->type !=')'){
+      start->type = TK_DEREF;
+    }
+  }
+  return;
+}
+
+word_t op_Deref(vaddr_t addr){
+  return vaddr_read(addr, 4);
 }
 
 /* 1. Check if the expression is surrounded by a matched pair of parentheses.
@@ -231,7 +277,7 @@ int check_parentheses(Token *start, Token *end){
     return true;
   }
   // 括号错误匹配
-  panic("Error Expression");
+  panic("Error Expression, the parentheses is not matched.");
 
 }
 
@@ -242,6 +288,11 @@ word_t expr(char *e, bool *success) {
   }
 
   /* TODO: Insert codes to evaluate the expression. */
+
+  // check if there has '-' meaning of negtive value and change it's type
+  check_Negtive(tokens, tokens + nr_token - 1);
+  check_Deref(tokens, tokens + nr_token - 1);
+
   int num = eval(tokens, tokens + nr_token - 1);
   return num;
 }
