@@ -31,7 +31,7 @@ static char* rl_gets() {
 
 static int cmd_c(char *args) {
   //TODO: when n is bigger than MAX_INSTR_TO_PRINT, the instructions will not print
-  cpu_exec(9);
+  cpu_exec(70);
   return 0;
 }
 

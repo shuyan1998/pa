@@ -102,8 +102,8 @@ void wp_difftest(){
     if(new != tmp->old){
       nemu_state.state = NEMU_STOP;
       printf("Watchpoint %d: %s\n \
-        Old value = %u\n \
-        New value = %u\n",
+        Old value = %0x\n \
+        New value = %0x\n",
         tmp->NO, tmp->expr, tmp->old, new);
         tmp->old = new;
     }
