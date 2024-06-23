@@ -3,24 +3,42 @@
 #include "cpu/exec.h"
 #include "rtl/rtl.h"
 
-def_EHelper(lui) {
-  rtl_li(s, ddest, id_src1->imm);
+#define def_compute_reg(name, rtl_func) def_EHelper(name) { \
+  rtl_ ## rtl_func(s, ddest, dsrc1, dsrc2); \
 }
 
-def_EHelper(addi){
-  rtl_addi(s, ddest, dsrc1, id_src2->imm);
+#define def_compute_imm(name, rtl_func) def_EHelper(name ## i) { \
+  rtl_ ## rtl_func ## i(s, ddest, dsrc1, id_src2->imm); \
 }
 
-def_EHelper(add){
-  rtl_add(s, ddest, dsrc1, dsrc2);
-}
+#define def_compute_reg_imm(name, rtl_func) \
+  def_compute_reg(name, rtl_func); \
+  def_compute_imm(name, rtl_func);
 
-def_EHelper(sub) {
-  rtl_sub(s, ddest, dsrc1, dsrc2);
+
+// compute
+def_compute_reg_imm(add, add)
+def_compute_reg(sub, sub)
+def_compute_reg_imm(xor, xor)
+def_compute_reg_imm(or, or)
+def_compute_reg_imm(and, and)
+def_compute_reg_imm(sll, sll)
+def_compute_reg_imm(srl, srl)
+def_compute_reg_imm(sra, sra)
+
+
+// compute slt
+def_EHelper(sltu){
+  if(*dsrc1 < *dsrc2){
+    *ddest = 1;
+  }
+  else{
+    *ddest =0;
+  }
 }
 
 def_EHelper(sltiu) {
-  if((sword_t)*dsrc1 < (id_src2->simm)){
+  if(*dsrc1 < (id_src2->imm)){
     *ddest = 1;
   }
   else{
@@ -28,14 +46,18 @@ def_EHelper(sltiu) {
   }
 }
 
+// mul/div
+def_compute_reg(mul, mulu_lo)
+def_compute_reg(mulhu, mulu_hi)
+def_compute_reg(div, divs_q)
+def_compute_reg(divu, divu_q)
+def_compute_reg(rem, divs_r)
+def_compute_reg(remu, divu_r)
+
+def_EHelper(lui) {
+  rtl_li(s, ddest, id_src1->imm);
+}
+
 def_EHelper(auipc){
   rtl_auipc(s, ddest, id_src1->imm);
-}
-
-def_EHelper(andi) {
-  rtl_andi(s, ddest, dsrc1, id_src2->imm);
-}
-
-def_EHelper(xori) {
-  rtl_xori(s, ddest, dsrc1, id_src2->imm);
 }

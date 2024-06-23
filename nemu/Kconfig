@@ -144,6 +144,21 @@ config ITRACE_COND
   string "Only trace instructions when the condition is true"
   default "true"
 
+config MTRACE
+  depends on TRACE && TARGET_NATIVE_ELF && ENGINE_INTERPRETER
+  bool "Enable memory tracer"
+  default n
+
+config MTRACE_START
+  depends on MTRACE
+  hex "When memory tracing is enabled (unit: start physical address of memory tracing)"
+  default 80000000
+
+config MTRACE_END
+  depends on MTRACE
+  hex "When memory tracing is disabled (unit: end physical address of memory tracing)"
+  default 80000008
+
 config WATCHPOINT
   depends on TARGET_NATIVE_ELF
   bool "Enable watchpoint"
@@ -151,6 +166,22 @@ config WATCHPOINT
   help
     Enable watchpoint with a reference design.
     Note that this will significantly reduce the performance of NEMU.
+
+config BREAKPOINT
+  depends on TARGET_NATIVE_ELF
+  bool "Enable breakpoint"
+  default n
+  help
+    Enable breakpoint with a reference design.
+    Note that this will significantly reduce the performance of NEMU.
+
+config IRINGBUFFER
+  depends on TARGET_NATIVE_ELF
+  bool "Enable instruction ringbuffer"
+  default n
+  help
+    Enable instruction ringbuffer which stores only specific number of instructions in the buffer.
+    Note that this will only print instrutions when instruction failed.
 
 config DIFFTEST
   depends on TARGET_NATIVE_ELF

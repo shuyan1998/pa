@@ -38,7 +38,6 @@ static void invalid_instr(vaddr_t thispc) {
 
 def_rtl(hostcall, uint32_t id, rtlreg_t *dest, const rtlreg_t *src1,
     const rtlreg_t *src2, word_t imm) {
-  printf("==================================\n");
   switch (id) {
     case HOSTCALL_EXIT:
       difftest_skip_ref();

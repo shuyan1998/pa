@@ -13,4 +13,12 @@ void wp_iterate();
 void wp_delete(int num);
 void wp_difftest();
 
+typedef struct breakpoint BP;
+BP* new_bp();
+void free_bp(BP *bp);
+void delete_bp(int num);
+void bp_watch(char *str);
+void bp_iterate();
+void bp_difftest();
+
 #endif

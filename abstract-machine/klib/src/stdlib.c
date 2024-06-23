@@ -29,6 +29,50 @@ int atoi(const char* nptr) {
   return x;
 }
 
+char *itoa(int n, char* str) {
+  // transform n to it's Two's complement if it is a negtive integer
+  int flag = 0;
+  if(n<0) {
+    if(n == -2147483648){
+      strcpy(str, "-2147483648");
+      return str;
+    }
+    n = n * (-1);
+    flag = 1;
+  }
+  if(n == 0){
+    str[0] = '0';
+    str[1] = '\0';
+    return str;
+  }
+
+  char arr1[20];
+  char arr2[20];
+  int i = 0, j = 0;
+  while(n >= 1) {
+    arr1[i++] = n % 10 + '0';
+    n /= 10;
+    if(n < 1){
+      i--;
+    }
+  }
+  if(flag == 1){
+    arr2[j++] = '-';
+  }
+
+  while(i >= 0) {
+    arr2[j++] = arr1[i--];
+  }
+  arr2[j] = '\0';
+
+  while(j>=0) {
+    str[j] = arr2[j];
+    j--;
+  }
+
+  return str;
+}
+
 void *malloc(size_t size) {
   // On native, malloc() will be called during initializaion of C runtime.
   // Therefore do not call panic() here, else it will yield a dead recursion:

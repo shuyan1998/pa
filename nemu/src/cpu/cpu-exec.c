@@ -2,8 +2,10 @@
 #include <cpu/cpu.h>
 #include <cpu/exec.h>
 #include <cpu/difftest.h>
+#include <cpu/iringbuffer.h>
 #include <isa-all-instr.h>
 #include <locale.h>
+#include <stdint.h>
 #include "sdb.h"
 
 /* The assembly code of instructions executed is only output to the screen
@@ -11,7 +13,8 @@
  * This is useful when you use the `si' command.
  * You can modify this value as you want.
  */
-#define MAX_INSTR_TO_PRINT 80
+#define MAX_INSTR_TO_PRINT 10000000
+
 
 CPU_state cpu = {};
 uint64_t g_nr_guest_instr = 0;
@@ -19,6 +22,7 @@ static uint64_t g_timer = 0; // unit: us
 static bool g_print_step = false;
 const rtlreg_t rzero = 0;
 rtlreg_t tmp_reg[4];
+static ringbuffer_t ringbuffer = {{0}, IRINGBUFFER_SIZE, 0, 0};
 
 void device_update();
 void fetch_decode(Decode *s, vaddr_t pc);
@@ -28,9 +32,14 @@ static void trace_and_difftest(Decode *_this, vaddr_t dnpc) {
   if (ITRACE_COND) log_write("%s\n", _this->logbuf);
 #endif
   if (g_print_step) { IFDEF(CONFIG_ITRACE, puts(_this->logbuf)); }
+  IFDEF(CONFIG_IRINGBUFFER, write_ringbuffer(&ringbuffer, (logbuf*)_this->logbuf));
   IFDEF(CONFIG_DIFFTEST, difftest_step(_this->pc, dnpc));
 
   IFDEF(CONFIG_WATCHPOINT, wp_difftest());
+  IFDEF(CONFIG_BREAKPOINT, bp_difftest(_this->logbuf));
+
+  char *instr_address = strtok(_this->logbuf, ":");
+  IFDEF(CONFIG_BREAKPOINT, bp_difftest(instr_address));
 }
 
 #include <isa-exec.h>
@@ -91,6 +100,7 @@ void fetch_decode(Decode *s, vaddr_t pc) {
 /* Simulate how the CPU works. */
 void cpu_exec(uint64_t n) {
   g_print_step = (n < MAX_INSTR_TO_PRINT);
+  g_print_step = false;
   switch (nemu_state.state) {
     case NEMU_END: case NEMU_ABORT:
       printf("Program execution has ended. To restart the program, exit NEMU and run again.\n");
@@ -116,6 +126,9 @@ void cpu_exec(uint64_t n) {
     case NEMU_RUNNING: nemu_state.state = NEMU_STOP; break;
 
     case NEMU_END: case NEMU_ABORT:
+      if(nemu_state.state == NEMU_ABORT || (nemu_state.state == NEMU_END && nemu_state.halt_ret != 0)){
+        read_ringbuffer_all(&ringbuffer);
+      }
       Log("nemu: %s at pc = " FMT_WORD,
           (nemu_state.state == NEMU_ABORT ? ASNI_FMT("ABORT", ASNI_FG_RED) :
            (nemu_state.halt_ret == 0 ? ASNI_FMT("HIT GOOD TRAP", ASNI_FG_GREEN) :

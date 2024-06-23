@@ -10,6 +10,7 @@ static int is_batch_mode = false;
 
 void init_regex();
 void init_wp_pool();
+void init_bp_pool();
 
 /* We use the `readline' library to provide more flexibility to read from stdin. */
 static char* rl_gets() {
@@ -31,7 +32,7 @@ static char* rl_gets() {
 
 static int cmd_c(char *args) {
   //TODO: when n is bigger than MAX_INSTR_TO_PRINT, the instructions will not print
-  cpu_exec(70);
+  cpu_exec(9999999);
   return 0;
 }
 
@@ -64,14 +65,22 @@ static int cmd_info(char *args){
   else if(strcmp(args, "w") == 0){
     wp_iterate();
   }
+  else if(strcmp(args, "b") == 0){
+    bp_iterate();
+  }
   else{
     panic("Error: The argument is wrong.");
   }
   return 0;
 }
 
-static int cmd_d(char* args){
+static int cmd_dw(char* args){
   wp_delete(atoi(args));
+  return 0;
+}
+
+static int cmd_db(char* args){
+  delete_bp(atoi(args));
   return 0;
 }
 
@@ -130,6 +139,16 @@ static int cmd_w(char *args){
   }
 }
 
+// Just implement the function to break with a memory address
+static int cmd_b(char *args){
+  if(args == NULL){
+    printf("No parameters\n");
+    return 0;
+  }
+  bp_watch(args);
+  return 0;
+}
+
 static struct {
   const char *name;
   const char *description;
@@ -143,7 +162,9 @@ static struct {
   {"x", "Scan and show N bytes in memory from the address EXPR", cmd_x},
   {"p", "Caculate the result of the given expression", cmd_p},
   {"w", "Set watchpoint to watch if the value of the expr changed", cmd_w},
-  {"d", "Delete the watchpoint we set before", cmd_d}
+  {"dw", "Delete the watchpoint we set before", cmd_dw},
+  {"b", "Set breakpoint to break on the specific position", cmd_b},
+  {"db", "Delete the breakpoint we set before", cmd_db}
 
   /* TODO: Add more commands */
 
@@ -222,4 +243,7 @@ void init_sdb() {
 
   /* Initialize the watchpoint pool. */
   init_wp_pool();
+
+  /* Initialize the breakpoint pool. */
+  init_bp_pool();
 }
