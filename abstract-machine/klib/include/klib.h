@@ -12,11 +12,11 @@ extern "C" {
 //#define __NATIVE_USE_KLIB__
 
 // If __NATIVE_USE_KLIB__ is defined, use standard library functions
-#ifdef __NATIVE_USE_KLIB__
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#else
+//#ifdef __NATIVE_USE_KLIB__
+//#include <stdio.h>
+//#include <stdlib.h>
+//#include <string.h>
+//#else
 
 // string.h
 void  *memset    (void *s, int c, size_t n);
@@ -46,7 +46,7 @@ int    snprintf  (char *str, size_t size, const char *format, ...);
 int    vsprintf  (char *str, const char *format, va_list ap);
 int    vsnprintf (char *str, size_t size, const char *format, va_list ap);
 
-#endif // __NATIVE_USE_KLIB__
+//#endif // __NATIVE_USE_KLIB__
 
 // assert.h
 #ifdef NDEBUG

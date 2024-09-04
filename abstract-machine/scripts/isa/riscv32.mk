@@ -1,5 +1,5 @@
-CROSS_COMPILE := riscv64-linux-gnu-
-COMMON_FLAGS  := -fno-pic -march=rv32im -mabi=ilp32
+CROSS_COMPILE := riscv32-unknown-linux-gnu-
+COMMON_FLAGS  := -fno-pic -march=rv32ia -mabi=ilp32
 CFLAGS        += $(COMMON_FLAGS) -static
-ASFLAGS       += $(COMMON_FLAGS) -O0
+ASFLAGS       += $(COMMON_FLAGS) -O2
 LDFLAGS       += -melf32lriscv

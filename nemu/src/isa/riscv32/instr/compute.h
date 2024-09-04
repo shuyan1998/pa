@@ -28,6 +28,23 @@ def_compute_reg_imm(sra, sra)
 
 
 // compute slt
+def_EHelper(slt) {
+  if((sword_t)*dsrc1 < (sword_t)*dsrc2) {
+    *ddest = 1;
+  }
+  else{
+    *ddest = 0;
+  }
+}
+
+def_EHelper(slti) {
+  if((sword_t)*dsrc1 < (sword_t)(id_src2->imm)){
+    *ddest = 1;
+  }
+  else{
+    *ddest = 0;
+  }
+}
 def_EHelper(sltu){
   if(*dsrc1 < *dsrc2){
     *ddest = 1;

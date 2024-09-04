@@ -38,8 +38,8 @@ static void trace_and_difftest(Decode *_this, vaddr_t dnpc) {
   IFDEF(CONFIG_WATCHPOINT, wp_difftest());
   IFDEF(CONFIG_BREAKPOINT, bp_difftest(_this->logbuf));
 
-  char *instr_address = strtok(_this->logbuf, ":");
-  IFDEF(CONFIG_BREAKPOINT, bp_difftest(instr_address));
+  //char *instr_address = strtok(_this->logbuf, ":");
+  //IFDEF(CONFIG_BREAKPOINT, bp_difftest(instr_address));
 }
 
 #include <isa-exec.h>

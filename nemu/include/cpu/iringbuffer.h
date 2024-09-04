@@ -1,7 +1,7 @@
 #ifndef __CPU_IRINGBUFFER_H
 
 #include <stdint.h>
-#define IRINGBUFFER_SIZE 10
+#define IRINGBUFFER_SIZE 50
 
 typedef struct {
   char data[128];
