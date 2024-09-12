@@ -29,7 +29,7 @@ void fetch_decode(Decode *s, vaddr_t pc);
 
 static void trace_and_difftest(Decode *_this, vaddr_t dnpc) {
 #ifdef CONFIG_ITRACE_COND
-  if (ITRACE_COND) log_write("%s\n", _this->logbuf);
+  log_write("%s\n", _this->logbuf);
 #endif
   if (g_print_step) { IFDEF(CONFIG_ITRACE, puts(_this->logbuf)); }
   IFDEF(CONFIG_IRINGBUFFER, write_ringbuffer(&ringbuffer, (logbuf*)_this->logbuf));
@@ -38,8 +38,8 @@ static void trace_and_difftest(Decode *_this, vaddr_t dnpc) {
   IFDEF(CONFIG_WATCHPOINT, wp_difftest());
   IFDEF(CONFIG_BREAKPOINT, bp_difftest(_this->logbuf));
 
-  //char *instr_address = strtok(_this->logbuf, ":");
-  //IFDEF(CONFIG_BREAKPOINT, bp_difftest(instr_address));
+  char *instr_address = strtok(_this->logbuf, ":");
+  IFDEF(CONFIG_BREAKPOINT, bp_difftest(instr_address));
 }
 
 #include <isa-exec.h>

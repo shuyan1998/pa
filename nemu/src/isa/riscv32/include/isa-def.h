@@ -6,9 +6,17 @@
 #include <sys/types.h>
 
 typedef struct {
+  uint32_t mcause;
+  uint32_t mstatus;
+  vaddr_t mepc;
+  vaddr_t mtvec;
+}riscv32_CSRs;
+
+typedef struct {
   struct {
     rtlreg_t _32;
   } gpr[32];
+  riscv32_CSRs csr;
 
   vaddr_t pc;
 } riscv32_CPU_state;

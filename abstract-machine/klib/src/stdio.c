@@ -21,7 +21,7 @@ int printf(const char *fmt, ...) {
   while(*fmt != '\0'){
     if(*fmt == '%'){
       fmt++;
-      char str[20];
+      char str[10000];
       switch(*fmt){
         case 'd':{
           int value = va_arg(arg_ptr, int);

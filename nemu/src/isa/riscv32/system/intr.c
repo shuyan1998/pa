@@ -5,7 +5,14 @@ word_t isa_raise_intr(word_t NO, vaddr_t epc) {
    * Then return the address of the interrupt/exception vector.
    */
 
-  return 0;
+  if(NO == -1) {
+    epc += 4;
+  }
+
+  IFDEF(CONFIG_ETRACE, printf("Exception NO: %d\n", NO));
+  cpu.csr.mcause = NO;
+  cpu.csr.mepc = epc;
+  return cpu.csr.mtvec;
 }
 
 word_t isa_query_intr() {

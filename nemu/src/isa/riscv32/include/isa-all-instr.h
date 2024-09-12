@@ -9,6 +9,7 @@
                         f(andi) \
                         f(lw) f(lbu) f(lhu) f(sw) f(sb) f(sh) f(lb) \
                         f(mul) f(mulhu) f(div) f(divu) f(rem) f(remu) \
-                        f(inv) f(nemu_trap)
+                        f(inv) f(nemu_trap) \
+                        f(csrrw) f(csrrs) f(ecall) f(mret)
 
 def_all_EXEC_ID();
