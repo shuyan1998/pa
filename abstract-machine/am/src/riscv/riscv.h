@@ -31,4 +31,6 @@ enum { MODE_U, MODE_S, MODE_M = 3 };
 #define MSTATUS_UXL  0
 #endif
 
+#define __ISA_RISCV__ 1
+
 #endif
