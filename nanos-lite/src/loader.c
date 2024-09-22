@@ -29,10 +29,9 @@ static uintptr_t loader(PCB *pcb, const char *filename) {
   // get elf header
   Elf_Ehdr ehdr;
   ramdisk_read(&ehdr, 0, sizeof(Elf_Ehdr));
-  printf("Magic num is %x\n", ehdr.e_ident);
 
   // check magic number
-  // assert(*(uint32_t *)ehdr.e_ident == 0x7f454c46);
+  assert(*(uint32_t *)ehdr.e_ident == 0x464c457f);
 
   // check architectuture
   assert(ehdr.e_machine == EXPECT_TYPE);

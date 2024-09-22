@@ -16,10 +16,10 @@ def_EHelper(jal) {
 }
 
 def_EHelper(jalr) {
-  rtl_addi(s, ddest, &s->pc, 4);
+  
   rtl_j(s, (*dsrc1)+(word_t)(id_src2->imm));
+  rtl_addi(s, ddest, &s->pc, 4);
   int mode = 0;
-  //printf("dest is %x, rz is %x\n", ddest, rz);
   if(s->isa.instr.j.rd == 0) {
     //printf("hello\n");
     mode = 1;

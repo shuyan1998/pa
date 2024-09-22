@@ -79,10 +79,11 @@ CXX       = $(CROSS_COMPILE)g++
 LD        = $(CROSS_COMPILE)ld
 
 ### Compilation flags
-INC_PATH += $(WORK_DIR)/include $(foreach l,$(LIBS_INC),$(NAVY_HOME)/libs/$(l)/include/)
+INC_PATH += $(WORK_DIR)/include $(foreach l,$(LIBS_INC),$(NAVY_HOME)/libs/$(l)/include/) $(AM_HOME)/am/src
+
 INCFLAGS += $(addprefix -I, $(INC_PATH))
 
-CFLAGS   += -O2 -MMD $(INCFLAGS) -static -D__NAVY__ \
+CFLAGS   += -O0 -MMD $(INCFLAGS) -static -D__NAVY__ \
             -D__ISA__=\"$(ISA)\" -D__ISA_$(shell echo $(ISA) | tr a-z A-Z)__ \
             -fno-asynchronous-unwind-tables -fno-builtin -fno-stack-protector
 CXXFLAGS +=  $(CFLAGS) -ffreestanding -fno-rtti -fno-exceptions
