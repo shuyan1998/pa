@@ -14,7 +14,7 @@
  * This is useful when you use the `si' command.
  * You can modify this value as you want.
  */
-#define MAX_INSTR_TO_PRINT 10000000
+#define MAX_INSTR_TO_PRINT 50
 
 
 CPU_state cpu = {.csr.mstatus=0x1800};
