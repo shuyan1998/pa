@@ -16,18 +16,19 @@ void do_syscall(Context *c) {
   a[0] = c->GPR1; // GPR1 stores system num
 
   switch (a[0]) {
-    case SYS_exit:c->GPRx = 0;printf("Do syscall exit, GPRx is %d\n", c->GPRx);halt(c->GPRx);break;
+    case SYS_exit:printf("Do syscall exit, GPRx is %d\n", c->GPRx);halt(c->GPRx);break;
     case SYS_yield:yield();break;
-    case SYS_write:fs_write(c->GPR2, (char*)c->GPR3, c->GPR4);break;
+    case SYS_write:
+      c->GPRx = fs_write(c->GPR2, (char*)c->GPR3, c->GPR4);break;
     case SYS_brk:c->GPRx = 0;break;
     case SYS_open:
-      fs_open((char*)c->GPR2, c->GPR3, c->GPR4);break;
+      c->GPRx = fs_open((char*)c->GPR2, c->GPR3, c->GPR4);break;
     case SYS_close:
-      fs_close(c->GPR2);break;
+      c->GPRx = fs_close(c->GPR2);break;
     case SYS_read:
-      fs_read(c->GPR2, (char*)c->GPR3, c->GPR4);break;
+      c->GPRx = fs_read(c->GPR2, (char*)c->GPR3, c->GPR4);break;
     case SYS_lseek:
-      fs_lseek(c->GPR2, c->GPR3, c->GPR4);break;
+      c->GPRx = fs_lseek(c->GPR2, c->GPR3, c->GPR4);break;
     default: panic("Unhandled syscall ID = %d", a[0]);
   }
 }

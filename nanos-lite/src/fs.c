@@ -41,6 +41,7 @@ int fs_open(const char *path, int flags, int mode) {
   printf("++++++++++++++++++++++++++++++++\n");
   for(int i = 3; i < NR_FILES; i++) {
     if(strcmp(path, file_table[i].name) == 0) {
+      printf("Found file %s, index is %d.\n", path, i);
       return i;
     }
   }

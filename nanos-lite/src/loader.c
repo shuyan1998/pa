@@ -29,34 +29,27 @@
 
 static uintptr_t loader(PCB *pcb, const char *filename) {
   int fd = fs_open(filename, 0, 0);
+  printf("fd is %d\n", fd);
   if (fd < 0) {
     panic("should not reach here");
   }
   Elf_Ehdr elf;
  
   assert(fs_read(fd, &elf, sizeof(elf)) == sizeof(elf));
-  // 检查魔数
+  // check magic num
   assert(*(uint32_t *)elf.e_ident == 0x464c457f);
   
   Elf32_Phdr phdr[elf.e_phnum];
   for (int i = 0; i < elf.e_phnum; i++) {
     uint32_t base = elf.e_phoff + i * elf.e_phentsize;
- 
     fs_lseek(fd, base, 0);
+    // read current phdr
     assert(fs_read(fd, &phdr[i], elf.e_phentsize) == elf.e_phentsize);
-    
-    // 需要装载的段
+    // load
     if (phdr[i].p_type == PT_LOAD) {
- 
-      // char * buf_malloc = (char *)malloc(phdr.p_filesz);
-      
       fs_lseek(fd, phdr[i].p_offset, 0);
       assert(fs_read(fd, (void*)phdr[i].p_vaddr, phdr[i].p_filesz) == phdr[i].p_filesz);
-      
-      // memcpy((void*)phdr.p_vaddr, buf_malloc, phdr.p_filesz);
       memset((void*)phdr[i].p_vaddr + phdr[i].p_filesz, 0, phdr[i].p_memsz - phdr[i].p_filesz);
-      
-      // free(buf_malloc);
     }
   }
  

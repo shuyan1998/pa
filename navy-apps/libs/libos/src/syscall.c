@@ -58,11 +58,12 @@ void _exit(int status) {
 }
 
 int _open(const char *path, int flags, mode_t mode) {
-  return _syscall_(SYS_open, (uintptr_t)path, flags, mode);
+  int ret = _syscall_(SYS_open, (uintptr_t)path, flags, mode);
+  return ret;
 }
 
 int _write(int fd, void *buf, size_t count) {
-  assert(fd == 1 || fd == 2);
+  //assert(fd == 1 || fd == 2);
   _syscall_(SYS_write, fd, (intptr_t)buf, count);
 
   return count;
