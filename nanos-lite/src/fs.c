@@ -31,14 +31,13 @@ size_t invalid_write(const void *buf, size_t offset, size_t len) {
 /* This is the information about all files in disk. */
 static Finfo file_table[] __attribute__((used)) = {
   [FD_STDIN]  = {"stdin", 0, 0, invalid_read, invalid_write},
-  [FD_STDOUT] = {"stdout", 0, 0, invalid_read, invalid_write},
-  [FD_STDERR] = {"stderr", 0, 0, invalid_read, invalid_write},
+  [FD_STDOUT] = {"stdout", 0, 0, invalid_read, serial_write},
+  [FD_STDERR] = {"stderr", 0, 0, invalid_read, serial_write},
 #include "files.h"
 };
 
 #define NR_FILES 24
 int fs_open(const char *path, int flags, int mode) {
-  printf("++++++++++++++++++++++++++++++++\n");
   for(int i = 3; i < NR_FILES; i++) {
     if(strcmp(path, file_table[i].name) == 0) {
       printf("Found file %s, index is %d.\n", path, i);
@@ -55,58 +54,69 @@ int fs_close(int fd) {
 
 size_t fs_read(int fd, void *buf, size_t count) {
   // ignore stdin, stdout, stderr for now
-  if(fd <= 2) {
-    Log("Ignore read from %s.\n", file_table[fd].name);
-    return 0;
-  }
+  // if(fd <= 2) {
+  //   Log("Ignore read from %s.\n", file_table[fd].name);
+  //   return 0;
+  // }
 
   size_t read_len = count;
   size_t file_size = file_table[fd].size;
   size_t file_offset = file_table[fd].disk_offset;
   size_t read_offset = file_table[fd].open_offset;
 
-  // some check
-  if(read_offset >= file_size) {
-    return 0;
-  };
-  if(read_offset + read_len > file_size) {
-    read_len = file_size - read_offset;
+  // read from ramdisk or device
+  if(file_table[fd].read == NULL) {
+    // some check
+    if(read_offset >= file_size) {
+      return 0;
+    };
+    if(read_offset + read_len > file_size) {
+      read_len = file_size - read_offset;
+    }
+
+    ramdisk_read(buf, file_offset + read_offset, read_len);
+    file_table[fd].open_offset += read_len;
   }
-  
-  // read from ramdisk
-  ramdisk_read(buf, file_offset + read_offset, read_len);
-  file_table[fd].open_offset += read_len;
+  else{
+    printf("read from device\n");
+    file_table[fd].read(buf, file_offset + read_offset, read_len);
+  }
 
   return read_len;
 }
 
 size_t fs_write(int fd, void *buf, size_t count) {
-  if(fd == 0) {
-    Log("Ignore write to %s.\n", file_table[fd].name);
-  }
-  if(fd == 1 || fd == 2) {
-    for(int i = 0; i < count; i++) {
-      putch(*((char*)buf + i));
-    }
-    return count;
-  }
+  // if(fd == 0) {
+  //   Log("Ignore write to %s.\n", file_table[fd].name);
+  // }
+  // if(fd == 1 || fd == 2) {
+  //   for(int i = 0; i < count; i++) {
+  //     putch(*((char*)buf + i));
+  //   }
+  //   return count;
+  // }
   
   size_t write_len = count;
   size_t file_size = file_table[fd].size;
   size_t file_offset = file_table[fd].disk_offset;
   size_t write_offset = file_table[fd].open_offset;
-  
-  // some check
-  if(write_offset >= file_size) {
-    return 0;
-  };
-  if(write_offset + write_len > file_size) {
-    write_len = file_size - write_offset;
-  }
 
-  // write to ramdisk
-  ramdisk_write(buf, file_offset + write_offset, write_len);
-  file_table[fd].open_offset += write_len;
+  // write to ramdisk or device
+  if(file_table[fd].write == NULL) {
+    // some check
+    if(write_offset >= file_size) {
+      return 0;
+    };
+    if(write_offset + write_len > file_size) {
+      write_len = file_size - write_offset;
+    }
+    ramdisk_write(buf, file_offset + write_offset, write_len);
+    file_table[fd].open_offset += write_len;
+  }
+  else{
+    printf("write to device\n");
+    file_table[fd].write(buf, file_offset + write_offset, write_len);
+  }
 
   return write_len;
 }

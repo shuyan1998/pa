@@ -1,14 +1,26 @@
 #include <common.h>
 #include <stdint.h>
 #include "am.h"
+#include "amdev.h"
+#include "klib-macros.h"
 #include "syscall.h"
 #include <fs.h>
+#include <stdio.h>
 
 #define NR_FILES 24
 void sys_write(intptr_t buf, int count) {
   for(int i = 0; i < count; i++) {
     putch(*((char*)(buf) + i));
   }
+}
+
+int sys_gettimeofday(struct timeval *tv, struct timezone *tz) {
+  uint32_t usec = io_read(AM_TIMER_UPTIME).us;
+  printf("usec is %d\n", usec);
+  tv->tv_sec = usec / 1000000;
+  tv->tv_usec = usec - usec / 1000000 * 1000000;
+  
+  return 0;
 }
 
 void do_syscall(Context *c) {
@@ -29,6 +41,8 @@ void do_syscall(Context *c) {
       c->GPRx = fs_read(c->GPR2, (char*)c->GPR3, c->GPR4);break;
     case SYS_lseek:
       c->GPRx = fs_lseek(c->GPR2, c->GPR3, c->GPR4);break;
+    case SYS_gettimeofday:
+      c->GPRx = sys_gettimeofday((void*)c->GPR2, (void*)c->GPR3);break;
     default: panic("Unhandled syscall ID = %d", a[0]);
   }
 }

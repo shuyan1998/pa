@@ -1,7 +1,9 @@
+#include <bits/types/struct_timeval.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/time.h>
 #include <unistd.h>
 
 static int evtdev = -1;
@@ -9,7 +11,10 @@ static int fbdev = -1;
 static int screen_w = 0, screen_h = 0;
 
 uint32_t NDL_GetTicks() {
-  return 0;
+  struct timeval now;
+  gettimeofday(&now, NULL);
+  uint32_t us = now.tv_sec * 1000000 + now.tv_usec;
+  return us;
 }
 
 int NDL_PollEvent(char *buf, int len) {
