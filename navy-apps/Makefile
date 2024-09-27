@@ -55,7 +55,7 @@ endif
 
 ### 32-bit ISA may need compiler-rt to support 64-bit mul/div
 ifneq ($(findstring $(ISA), x86|mips32|riscv32|loongarch32r),)
-LIBS += compiler-rt
+LIBS += compiler-rt libndl
 endif
 
 ### All libraries to add to the include path
@@ -168,7 +168,7 @@ $(CLEAN_ALL):
 
 ### Build fsimg and ramdisk for Nanos-lite
 APPS =
-TESTS = dummy hello file-test timer-test
+TESTS = dummy hello file-test event-test
 
 fsimg: $(addprefix apps/, $(APPS)) $(addprefix tests/, $(TESTS))
 	-for t in $^; do $(MAKE) -s -C $(NAVY_HOME)/$$t install; done

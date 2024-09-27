@@ -54,6 +54,7 @@ static uintptr_t loader(PCB *pcb, const char *filename) {
   }
  
   assert(fs_close(fd) == 0);
+  printf("load %s done,entry is %x\n", filename, elf.e_entry);
   
   return elf.e_entry;
 }
