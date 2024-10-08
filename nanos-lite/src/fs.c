@@ -41,7 +41,7 @@ static Finfo file_table[] __attribute__((used)) = {
 int fs_open(const char *path, int flags, int mode) {
   for(int i = 3; i < NR_FILES; i++) {
     if(strcmp(path, file_table[i].name) == 0) {
-      printf("Found file %s, index is %d.\n", path, i);
+      //printf("Found file %s, index is %d.\n", path, i);
       return i;
     }
   }
@@ -79,8 +79,8 @@ size_t fs_read(int fd, void *buf, size_t count) {
     file_table[fd].open_offset += read_len;
   }
   else{
-    printf("read from device\n");
-    file_table[fd].read(buf, file_offset + read_offset, read_len);
+    //printf("read from device\n");
+    read_len = file_table[fd].read(buf, file_offset + read_offset, read_len);
   }
 
   return read_len;
@@ -115,7 +115,7 @@ size_t fs_write(int fd, void *buf, size_t count) {
     file_table[fd].open_offset += write_len;
   }
   else{
-    printf("write to device\n");
+    //printf("write to device\n");
     file_table[fd].write(buf, file_offset + write_offset, write_len);
   }
 
