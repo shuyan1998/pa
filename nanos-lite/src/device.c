@@ -35,8 +35,24 @@ size_t dispinfo_read(void *buf, size_t offset, size_t len) {
   return snprintf((char*)buf, len, "WIDTH:%d\nHEIGHT:%d\n", config.width, config.height);
 }
 
+/* write len count data from buf to offset of frame buffer
+  buf: the source data to write from
+  offset: the offset of frame buffer to write to
+  len: the length of data to write (It should be a row in ndl - NDL_DrawRect)
+*/
 size_t fb_write(const void *buf, size_t offset, size_t len) {
-  return 0;
+  // get screen width and height
+  AM_GPU_CONFIG_T config = io_read(AM_GPU_CONFIG);
+  int width = config.width;
+  
+  offset /= 4; // convert offset to byte offset
+  len /= 4; // convert len to byte len
+  int x = offset % width;
+  int y = offset / width;
+  // AM_GPU_FBDRAW: int x, y; void *pixels; int w, h; bool sync
+  io_write(AM_GPU_FBDRAW, x, y, (void *)buf, len, 1, true);
+  
+  return len;
 }
 
 void init_device() {

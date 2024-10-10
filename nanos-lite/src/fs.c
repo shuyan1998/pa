@@ -1,5 +1,8 @@
 #include "am.h"
+#include "amdev.h"
 #include "debug.h"
+#include "klib-macros.h"
+#include "sys/_intsup.h"
 #include <fs.h>
 #include <memory.h>
 #include <stdint.h>
@@ -35,6 +38,7 @@ static Finfo file_table[] __attribute__((used)) = {
   [FD_STDERR] = {"stderr", 0, 0, invalid_read, serial_write},
   [FD_EVENT] = {"/dev/events", 0, 0, events_read, invalid_write},
   [FD_DISPINFO] = {"/proc/dispinfo", 0, 0, dispinfo_read, invalid_write},
+  [FD_FB] = {"/dev/fb", 0, 0, invalid_read, fb_write},
 #include "files.h"
 };
 
@@ -157,4 +161,9 @@ size_t fs_lseek(int fd, size_t offset, int whence) {
 }
 void init_fs() {
   // TODO: initialize the size of /dev/fb
+  AM_GPU_CONFIG_T config = io_read(AM_GPU_CONFIG);
+  int screen_width = config.width;
+  int screen_height = config.height;
+  int fb_size = screen_width * screen_height * sizeof(uint32_t);
+  file_table[FD_FB].size = fb_size;
 }
