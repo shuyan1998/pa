@@ -1,4 +1,4 @@
-#include "fixedptc.h"
+#include "include/fixedptc.h"
 
 /**
  * Convert the given fixedpt number to a decimal string.
@@ -63,8 +63,8 @@ void fixedpt_str(fixedpt A, char *str, int max_dec) {
 /* Returns the square root of the given number, or -1 in case of error */
 fixedpt fixedpt_sqrt(fixedpt A) {
 	int invert = 0;
-	int iter = FIXEDPT_FBITS;
-	int l, i;
+        int iter = (32 - 24);
+        int l, i;
 
 	if (A < 0)
 		return (-1);
