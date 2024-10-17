@@ -1,6 +1,7 @@
 #include <NDL.h>
 #include <sdl-video.h>
 #include <assert.h>
+#include <stdint.h>
 #include <string.h>
 #include <stdlib.h>
 
@@ -13,6 +14,26 @@ void SDL_FillRect(SDL_Surface *dst, SDL_Rect *dstrect, uint32_t color) {
 }
 
 void SDL_UpdateRect(SDL_Surface *s, int x, int y, int w, int h) {
+  // if width and height is zero, use the whole surface
+  if( w == 0 || h == 0) {
+    w = s -> w;
+    h = s -> h;
+  }
+  int depth = s->format->BitsPerPixel;
+  if (depth == 32) {
+    // direct write to framebuffer
+    NDL_DrawRect((uint32_t*)s->pixels, x, y, w, h);
+  }
+  else if (depth == 8) {
+    uint32_t* real_color_pixels = (uint32_t*)malloc(w * h);
+    // need read color from palette first
+    for (int i = 0; i < h; i++) {
+      for(int j =0 ; j < w; j++){
+        real_color_pixels[i * w + j] = s->format->palette->colors[s->pixels[(y + i) * w + x + j]].val;
+      }
+    }
+    NDL_DrawRect(real_color_pixels, x, y, w, h);
+  }
 }
 
 // APIs below are already implemented.

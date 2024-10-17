@@ -183,7 +183,7 @@ int open(const char *path, int flags, ...) {
 
 ssize_t read(int fd, void *buf, size_t count) {
   if (fd == dispinfo_fd) {
-    return snprintf((char *)buf, count, "WIDTH: %d\nHEIGHT: %d\n", disp_w, disp_h);
+    return snprintf((char *)buf, count, "WIDTH:%d\nHEIGHT:%d\n", disp_w, disp_h);
   } else if (fd == evt_fd) {
     int has_key = 0;
     SDL_Event ev = {};

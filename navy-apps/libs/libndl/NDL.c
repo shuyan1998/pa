@@ -106,8 +106,6 @@ void NDL_DrawRect(uint32_t *pixels, int x, int y, int w, int h) {
     // 此处我们'按行'为单位写入
     write(fd, pixels + i * w, 4*(x + i < canvas_w ? w : canvas_w - x));
   }
-  
-  
 }
 
 void NDL_OpenAudio(int freq, int channels, int samples) {

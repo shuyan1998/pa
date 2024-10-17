@@ -42,7 +42,7 @@ static Finfo file_table[] __attribute__((used)) = {
 #include "files.h"
 };
 
-#define NR_FILES 24
+#define NR_FILES 32
 int fs_open(const char *path, int flags, int mode) {
   for(int i = 3; i < NR_FILES; i++) {
     if(strcmp(path, file_table[i].name) == 0) {
