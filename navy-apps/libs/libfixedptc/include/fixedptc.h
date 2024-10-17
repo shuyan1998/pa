@@ -161,9 +161,13 @@ static inline fixedpt fixedpt_floor(fixedpt A) {
 }
 
 static inline fixedpt fixedpt_ceil(fixedpt A) {
-	return 0;
+	// no fracpart
+	if(fixedpt_fracpart(A) == 0) return A;
+	// A > 0
+	if(A > 0) return A & ~(FIXEDPT_FMASK) + FIXEDPT_ONE;
+	// A < 0
+	else return -((-A) & ~(FIXEDPT_FMASK));
 }
-
 /*
  * Note: adding and substracting fixedpt numbers can be done by using
  * the regular integer operators + and -.
