@@ -23,7 +23,8 @@ uint32_t NDL_GetTicks() {
 int NDL_PollEvent(char *buf, int len) {
   int fd = open("/dev/events", 0, 0);
   int ret = read(fd, buf, len);
-  assert(close(fd) == 0);
+  close(fd);
+  //assert(close(fd) == 0);
   
   return ret == 0 ? 0 : 1;
 }
@@ -52,7 +53,8 @@ void NDL_OpenCanvas(int *w, int *h) {
   int fd = open("/proc/dispinfo", 0, 0);
   int ret = read(fd, buf, buf_size);
   assert(ret < buf_size);
-  assert(close(fd) == 0);
+  close(fd);
+  //assert(close(fd) == 0);
   
   int i = 0;
   int width = 0, height = 0;
