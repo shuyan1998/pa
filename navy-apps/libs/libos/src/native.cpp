@@ -44,6 +44,12 @@ static int sbctl_fd = -1;
 static uint32_t *fb = NULL;
 static char fsimg_path[512] = "";
 
+#define KEY_QUEUE_LEN 64
+static SDL_Event key_queue[KEY_QUEUE_LEN] = {};
+static int key_f = 0, key_r = 0;
+static SDL_mutex *key_queue_lock = NULL;
+Uint32* framebuffer = nullptr;
+
 static inline void get_fsimg_path(char *newpath, const char *path) {
   sprintf(newpath, "%s%s", fsimg_path, path);
 }
@@ -61,35 +67,61 @@ static inline void get_fsimg_path(char *newpath, const char *path) {
   if (scancode == SDL_SCANCODE_##k) name = #k;
 
 static void update_screen() {
-  SDL_UpdateTexture(texture, NULL, fb, disp_w * sizeof(Uint32));
+  printf("Updateing now \n");
+  // 填充帧缓冲区为红色
+
+  for (int y = 0; y < disp_h; ++y) {
+      for (int x = 0; x < disp_w; ++x) {
+          fb[y * disp_w + x] = 0xFF0000FF; // 红色 (ARGB: A=255, R=255, G=0, B=0)
+      }
+  }
+
+  // 更新纹理
+  if (SDL_UpdateTexture(texture, NULL, fb, disp_w * sizeof(Uint32)) < 0) {
+      fprintf(stderr, "SDL_UpdateTexture failed: %s\n", SDL_GetError());
+  }
+
+  // 渲染纹理到窗口
   SDL_RenderClear(renderer);
   SDL_RenderCopy(renderer, texture, NULL, NULL);
   SDL_RenderPresent(renderer);
+
 }
 
-#define KEY_QUEUE_LEN 64
-static SDL_Event key_queue[KEY_QUEUE_LEN] = {};
-static int key_f = 0, key_r = 0;
-static SDL_mutex *key_queue_lock = NULL;
+
 
 static int event_thread(void *args) {
+  printf("Event thread\n");
   SDL_Event event;
-  while (1) {
-    SDL_WaitEvent(&event);
+  framebuffer = (Uint32*)malloc(disp_w * disp_h * sizeof(Uint32));
+  while(1){
+    printf("Updateing now \n");
+    // 填充帧缓冲区为红色
 
-    switch (event.type) {
-      case SDL_QUIT: exit(0); break;
-      case SDL_USEREVENT: update_screen(); break;
-      case SDL_KEYDOWN:
-      case SDL_KEYUP:
-        SDL_LockMutex(key_queue_lock);
-        key_queue[key_r] = event;
-        key_r = (key_r + 1) % KEY_QUEUE_LEN;
-        assert(key_r != key_f);
-        SDL_UnlockMutex(key_queue_lock);
-        break;
-    }
+
+    
   }
+  
+  // while (1) { 
+  //   SDL_LockMutex(key_queue_lock);
+    
+  //   SDL_UnlockMutex(key_queue_lock);
+  //   return 0;
+
+  //   SDL_WaitEvent(&event);
+
+  //   switch (event.type) {
+  //     case SDL_QUIT: exit(0); break;
+  //     case SDL_KEYDOWN:
+  //     case SDL_KEYUP:
+  //       SDL_LockMutex(key_queue_lock);
+  //       key_queue[key_r] = event;
+  //       key_r = (key_r + 1) % KEY_QUEUE_LEN;
+  //       assert(key_r != key_f);
+  //       SDL_UnlockMutex(key_queue_lock);
+  //       break;
+  //   }
+  // }
   return 0;
 }
 
@@ -107,16 +139,41 @@ static void audio_fill(void *userdata, uint8_t *stream, int len) {
 }
 
 static void open_display() {
-  SDL_InitSubSystem(SDL_INIT_VIDEO | SDL_INIT_TIMER);
+  if (SDL_InitSubSystem(SDL_INIT_VIDEO | SDL_INIT_TIMER) < 0) {
+      fprintf(stderr, "Unable to initialize SDL: %s\n", SDL_GetError());
+  }
 #ifdef MODE_800x600
   SDL_CreateWindowAndRenderer(disp_w, disp_h, 0, &window, &renderer);
 #else
-  SDL_CreateWindowAndRenderer(disp_w * 2, disp_h * 2, 0, &window, &renderer);
+  SDL_CreateWindowAndRenderer(disp_w, disp_h, 0, &window, &renderer);
 #endif
+  if (!window || !renderer) {
+      fprintf(stderr, "Could not create window or renderer: %s\n", SDL_GetError());
+      SDL_QuitSubSystem(SDL_INIT_VIDEO | SDL_INIT_TIMER);
+  }
   SDL_SetWindowTitle(window, "Simulated Nanos Application");
-  SDL_CreateThread(event_thread, "event thread", nullptr);
-  SDL_AddTimer(1000 / FPS, timer_handler, NULL);
   texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STATIC, disp_w, disp_h);
+  SDL_Thread* event_thread_handle = SDL_CreateThread(event_thread, "event thread", nullptr);
+
+  for (int y = 0; y < disp_h; ++y) {
+      for (int x = 0; x < disp_w; ++x) {
+          framebuffer[y * disp_w + x] = 0xFF0000FF; // 红色 (ARGB: A=255, R=255, G=0, B=0)
+      }
+  }
+
+  // 更新纹理
+  if (SDL_UpdateTexture(texture, NULL, framebuffer, disp_w * sizeof(Uint32)) < 0) {
+      fprintf(stderr, "SDL_UpdateTexture failed: %s\n", SDL_GetError());
+  }
+
+  // 渲染纹理到窗口
+  SDL_RenderClear(renderer);
+  SDL_RenderCopy(renderer, texture, NULL, NULL);
+  SDL_RenderPresent(renderer);
+  SDL_Delay(1000);
+  sleep(5);
+//Uint32 timer_id = SDL_AddTimer(1000 / FPS, timer_handler, NULL);
+  
 
   fb_memfd = memfd_create("fb", 0);
   assert(fb_memfd != -1);
@@ -187,6 +244,7 @@ ssize_t read(int fd, void *buf, size_t count) {
   } else if (fd == evt_fd) {
     int has_key = 0;
     SDL_Event ev = {};
+
     SDL_LockMutex(key_queue_lock);
     if (key_f != key_r) {
       ev = key_queue[key_f];

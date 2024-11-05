@@ -6,6 +6,7 @@
 #include "syscall.h"
 #include <fs.h>
 #include <stdio.h>
+#include <sys/time.h>
 
 #define NR_FILES 24
 void sys_write(intptr_t buf, int count) {

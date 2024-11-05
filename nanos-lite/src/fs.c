@@ -2,7 +2,6 @@
 #include "amdev.h"
 #include "debug.h"
 #include "klib-macros.h"
-#include "sys/_intsup.h"
 #include <fs.h>
 #include <memory.h>
 #include <stdint.h>
