@@ -39,7 +39,7 @@ static uintptr_t loader(PCB *pcb, const char *filename) {
   // check magic num
   assert(*(uint32_t *)elf.e_ident == 0x464c457f);
   
-  Elf32_Phdr phdr[elf.e_phnum];
+  Elf_Phdr phdr[elf.e_phnum];
   for (int i = 0; i < elf.e_phnum; i++) {
     uint32_t base = elf.e_phoff + i * elf.e_phentsize;
     fs_lseek(fd, base, 0);
