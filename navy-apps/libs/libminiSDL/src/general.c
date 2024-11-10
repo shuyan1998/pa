@@ -13,12 +13,15 @@ char *SDL_GetError() {
 }
 
 int SDL_SetError(const char* fmt, ...) {
+  printf("SDL_SetError Not implemented\n");
   return -1;
 }
 
 int SDL_ShowCursor(int toggle) {
+  printf("SDL_ShowCursor Not implemented\n");
   return 0;
 }
 
 void SDL_WM_SetCaption(const char *title, const char *icon) {
+  printf("SDL_WM_SetCaption Not implemented\n");
 }

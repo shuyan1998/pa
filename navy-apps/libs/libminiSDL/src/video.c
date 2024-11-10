@@ -49,25 +49,22 @@ void SDL_FillRect(SDL_Surface *dst, SDL_Rect *dstrect, uint32_t color) {
 }
 
 void SDL_UpdateRect(SDL_Surface *s, int x, int y, int w, int h) {
-  // if width and height is zero, use the whole surface
-  if( w == 0 || h == 0) {
-    w = s -> w;
-    h = s -> h;
+  if (w == 0 || h == 0) {
+    w = s->w;
+    h = s->h;
   }
-  int depth = s->format->BitsPerPixel;
-  if (depth == 32) {
-    // direct write to framebuffer
-    NDL_DrawRect((uint32_t*)s->pixels, x, y, w, h);
-  }
-  else if (depth == 8) {
-    uint32_t* real_color_pixels = (uint32_t*)malloc(w * h);
-    // need read color from palette first
-    for (int i = 0; i < h; i++) {
-      for(int j =0 ; j < w; j++){
-        real_color_pixels[i * w + j] = s->format->palette->colors[s->pixels[(y + i) * w + x + j]].val;
+  uint32_t local_pixels[w * h];
+  switch (s->format->BitsPerPixel) {
+    case 32: NDL_DrawRect((uint32_t *)(s->pixels), x, y, w, h); break;
+    case 8: 
+      for (int i = 0; i < h; i ++) {
+        for (int j = 0; j < w; j ++) {
+          local_pixels[i * w + j] = s->format->palette->colors[s->pixels[(i + y) * s->w + j + x]].val;
+        }
       }
-    }
-    NDL_DrawRect(real_color_pixels, x, y, w, h);
+      NDL_DrawRect(local_pixels, x, y, w, h);
+      break;
+    default: break;
   }
 }
 
@@ -162,6 +159,8 @@ void SDL_SoftStretch(SDL_Surface *src, SDL_Rect *srcrect, SDL_Surface *dst, SDL_
   int w = (srcrect == NULL ? src->w : srcrect->w);
   int h = (srcrect == NULL ? src->h : srcrect->h);
 
+  printf("src w %d, src h %d\n", w, h);
+
   assert(dstrect);
   if(w == dstrect->w && h == dstrect->h) {
     /* The source rectangle and the destination rectangle
@@ -175,7 +174,24 @@ void SDL_SoftStretch(SDL_Surface *src, SDL_Rect *srcrect, SDL_Surface *dst, SDL_
     SDL_BlitSurface(src, &rect, dst, dstrect);
   }
   else {
-    assert(0);
+    // 源矩形和目标矩形大小不同，进行拉伸
+        int src_pitch = src->pitch;  // 源表面每行的字节数
+        int dst_pitch = dst->pitch;  // 目标表面每行的字节数
+        uint8_t *src_pixels = (uint8_t *)src->pixels + y * src_pitch + x;
+        uint8_t *dst_pixels = (uint8_t *)dst->pixels + dstrect->y * dst_pitch + dstrect->x;
+
+        // 计算每个像素的步长
+        double src_x_step = (double)w / dstrect->w;
+        double src_y_step = (double)h / dstrect->h;
+
+        for (int dy = 0; dy < dstrect->h; ++dy) {
+            int src_y = (int)(dy * src_y_step);
+            for (int dx = 0; dx < dstrect->w; ++dx) {
+                int src_x = (int)(dx * src_x_step);
+                dst_pixels[dx] = src_pixels[src_x];
+            }
+            dst_pixels += dst_pitch;
+        }
   }
 }
 
