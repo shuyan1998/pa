@@ -1,3 +1,4 @@
+#include "arch/riscv32-nemu.h"
 #include <am.h>
 #include <riscv/riscv.h>
 #include <klib.h>
@@ -58,7 +59,8 @@ bool cte_init(Context*(*handler)(Event, Context*)) {
 Context *kcontext(Area kstack, void (*entry)(void *), void *arg) {
   Context *c = (Context*)kstack.end - 1;
   c->mepc = (uintptr_t)entry;
-  
+  c->GPR2 = (uintptr_t)arg;
+
   return c;
 }
 
