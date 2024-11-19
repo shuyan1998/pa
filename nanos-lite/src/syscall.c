@@ -3,6 +3,7 @@
 #include "am.h"
 #include "amdev.h"
 #include "klib-macros.h"
+#include "proc.h"
 #include "syscall.h"
 #include <fs.h>
 #include <stdio.h>
@@ -29,7 +30,15 @@ void do_syscall(Context *c) {
   a[0] = c->GPR1; // GPR1 stores system num
 
   switch (a[0]) {
-    case SYS_exit:printf("Do syscall exit, GPRx is %d\n", c->GPRx);halt(c->GPRx);break;
+    case SYS_exit:printf("Do syscall exit, GPRx is %d\n", c->GPRx);
+      switch(c->GPRx){
+        case SYS_execve:
+          printf("00000000000000000\n");
+          naive_uload(NULL, "/bin/nslider");
+          break;
+        default: naive_uload(NULL, "/bin/menu");;break;
+      }
+      break;
     case SYS_yield:yield();break;
     case SYS_write:
       c->GPRx = fs_write(c->GPR2, (char*)c->GPR3, c->GPR4);break;

@@ -54,8 +54,9 @@ int main() {
   int rep = 0, g = 0;
 
   render();
+  int i = 2;
 
-  while (1) {
+  while (i != 0) {
     SDL_Event e;
     SDL_WaitEvent(&e);
 
@@ -83,6 +84,7 @@ int main() {
           }
           break;
       }
+      i--;
     }
   }
 

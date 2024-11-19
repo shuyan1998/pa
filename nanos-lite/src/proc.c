@@ -1,5 +1,6 @@
 #include "am.h"
 #include <proc.h>
+#include <stdint.h>
 
 #define MAX_NR_PROC 4
 
@@ -26,14 +27,15 @@ void context_kload(PCB *pcb, void (*entry)(void *), void *arg){
 }
 
 void init_proc() {
-  context_kload(&pcb[0], hello_fun, "A");
-  context_kload(&pcb[1], hello_fun, "B");
+  //context_kload(&pcb[0], hello_fun, "A");
+  //context_kload(&pcb[1], hello_fun, "B");
+  //context_uload(&pcb[1], "/bin/menu");
   switch_boot_pcb();
 
   Log("Initializing processes...");
 
   // load program here
-  // naive_uload(NULL, "/bin/hello");
+  naive_uload(NULL, "/bin/menu");
 
 }
 

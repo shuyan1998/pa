@@ -65,3 +65,11 @@ void naive_uload(PCB *pcb, const char *filename) {
   ((void(*)())entry) ();
 }
 
+void context_uload(PCB *pcb, const char* filename) {
+  uintptr_t entry = loader(pcb, filename);
+  Context *uc = ucontext(&pcb->as, (Area){pcb->stack, pcb->stack + 1}, (void*)entry);
+  // save context pointer to pcb
+  pcb->cp = uc;
+  // save stack pointer to a0 before user process start
+  pcb->cp->GPRx = (uintptr_t)heap.end;
+}
