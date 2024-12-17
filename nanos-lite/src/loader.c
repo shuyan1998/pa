@@ -65,11 +65,80 @@ void naive_uload(PCB *pcb, const char *filename) {
   ((void(*)())entry) ();
 }
 
-void context_uload(PCB *pcb, const char* filename) {
-  uintptr_t entry = loader(pcb, filename);
-  Context *uc = ucontext(&pcb->as, (Area){pcb->stack, pcb->stack + 1}, (void*)entry);
-  // save context pointer to pcb
-  pcb->cp = uc;
-  // save stack pointer to a0 before user process start
-  pcb->cp->GPRx = (uintptr_t)heap.end;
+void context_uload(PCB *pcb, const char *filename, char *const argv[], char *const envp[]) {
+    uintptr_t entry = loader(pcb, filename);
+
+    // 计算argv和envp的长度
+    int argc = 0;
+    while (argv[argc] != NULL) {
+        argc++;
+    }
+
+    int envc = 0;
+    while (envp[envc] != NULL) {
+        envc++;
+    }
+
+    // 计算所需的栈空间大小
+    size_t stack_size = 0;
+    stack_size += (argc + 1) * sizeof(uintptr_t);  // argv + NULL
+    stack_size += (envc + 1) * sizeof(uintptr_t);  // envp + NULL
+    stack_size += sizeof(int);                     // argc
+
+    // 计算字符串的总长度
+    for (int i = 0; i < argc; i++) {
+        stack_size += strlen(argv[i]) + 1;
+    }
+    for (int i = 0; i < envc; i++) {
+        stack_size += strlen(envp[i]) + 1;
+    }
+
+    // 调整栈指针到16字节对齐
+    uintptr_t sp = (uintptr_t)new_page(8) - stack_size;
+    sp = (sp - 16) & ~0xF;  // 16字节对齐
+
+    // 填充字符串
+    char *str_ptr = (char *)(sp + (argc + 1) * sizeof(uintptr_t) + (envc + 1) * sizeof(uintptr_t) + sizeof(int));
+    char *str_tmp_ptr = str_ptr;
+    for (int i = 0; i < argc; i++) {
+        strcpy(str_tmp_ptr, argv[i]);
+        str_tmp_ptr += strlen(argv[i]) + 1;
+    }
+    for (int i = 0; i < envc; i++) {
+        strcpy(str_tmp_ptr, envp[i]);
+        str_tmp_ptr += strlen(envp[i]) + 1;
+    }
+
+    uintptr_t *user_stack = (uintptr_t*)sp;
+    *(int*)user_stack = argc;
+
+    // 填充argv指针数组
+    /* 1. 先定位到字符串区域的起始位置，以逐个获取字符串的地址；
+       2. 然后定位到argv指针数组的起始位置；
+       3. 将argv指针数组中的每个指针指向字符串区域；
+    */
+    uintptr_t *stack_argv = (uintptr_t*)(user_stack + 1);
+    for(int i = 0; i < argc; i++) {
+      stack_argv[i] = (uintptr_t)str_ptr;
+      str_ptr += strlen(argv[i]) + 1;
+    }
+    stack_argv[argc] = 0;
+
+    // 填充envp指针数组
+    uintptr_t *stack_envp = (uintptr_t*)(stack_argv + argc + 1);
+    for(int i = 0; i < envc; i++) {
+      stack_envp[i] = (uintptr_t)str_ptr;
+      str_ptr += strlen(envp[i]) + 1;
+    }
+    stack_envp[envc] = 0;
+    
+
+    // 创建上下文
+    Context *uc = ucontext(&pcb->as, (Area){(void *)sp, (void *)pcb->stack}, (void *)entry);
+
+    // 保存上下文指针到PCB
+    pcb->cp = uc;
+
+    // 设置栈指针到a0寄存器（RISC-V中a0传递第一个参数）
+    pcb->cp->GPRx = (uintptr_t)user_stack;  // a0 = argc
 }

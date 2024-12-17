@@ -16,6 +16,7 @@ static const char *keyname[256] __attribute__((used)) = {
 };
 
 size_t serial_write(const void *buf, size_t offset, size_t len) {
+  yield();
   for(int i = 0; i < len; i++) {
     putch(*((char*)buf + i));
   }
@@ -23,6 +24,7 @@ size_t serial_write(const void *buf, size_t offset, size_t len) {
 }
 
 size_t events_read(void *buf, size_t offset, size_t len) {
+  yield();
   AM_INPUT_KEYBRD_T ev = io_read(AM_INPUT_KEYBRD);
   if(ev.keycode == AM_KEY_NONE){
     return 0;
@@ -41,6 +43,7 @@ size_t dispinfo_read(void *buf, size_t offset, size_t len) {
   len: the length of data to write (It should be a row in ndl - NDL_DrawRect)
 */
 size_t fb_write(const void *buf, size_t offset, size_t len) {
+  yield();
   // get screen width and height
   AM_GPU_CONFIG_T config = io_read(AM_GPU_CONFIG);
   int width = config.width;

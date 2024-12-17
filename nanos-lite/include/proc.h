@@ -19,8 +19,9 @@ typedef union {
 extern PCB *current;
 
 Context* schedule(Context *prev);
+int sys_execve(const char *fname, char * const argv[], char *const envp[]);
 
 void naive_uload(PCB *pcb, const char *filename);
-void context_uload(PCB *pcb, const char* filename);
+void context_uload(PCB *pcb, const char* filename, char *const argv[], char *const envp[]);
 
 #endif

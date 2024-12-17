@@ -30,14 +30,10 @@ void do_syscall(Context *c) {
   a[0] = c->GPR1; // GPR1 stores system num
 
   switch (a[0]) {
-    case SYS_exit:printf("Do syscall exit, GPRx is %d\n", c->GPRx);
-      switch(c->GPRx){
-        case SYS_execve:
-          printf("00000000000000000\n");
-          naive_uload(NULL, "/bin/nslider");
-          break;
-        default: naive_uload(NULL, "/bin/menu");;break;
-      }
+    case SYS_exit:printf("Do syscall exit, GPRx is %d\n", c->GPRx);break;
+    case SYS_execve:
+      c->GPRx = sys_execve((char*)c->GPR2, (char* const*)c->GPR3, (char* const*)c->GPR4);
+      while(1);
       break;
     case SYS_yield:yield();break;
     case SYS_write:

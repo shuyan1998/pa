@@ -27,15 +27,18 @@ void context_kload(PCB *pcb, void (*entry)(void *), void *arg){
 }
 
 void init_proc() {
-  //context_kload(&pcb[0], hello_fun, "A");
+  context_kload(&pcb[0], hello_fun, "A");
   //context_kload(&pcb[1], hello_fun, "B");
-  //context_uload(&pcb[1], "/bin/menu");
+  char* argv[] = {"/bin/exec-test", "print", NULL};
+  char* envp[] = {"lalala=test", NULL};
+  //context_uload(&pcb[1], "/bin/exec-test", argv, envp);
+  context_uload(&pcb[1], "/bin/menu", argv, envp);
   switch_boot_pcb();
 
   Log("Initializing processes...");
 
   // load program here
-  naive_uload(NULL, "/bin/menu");
+  // naive_uload(NULL, "/bin/exec-test");
 
 }
 
@@ -48,4 +51,12 @@ Context* schedule(Context *prev) {
 
   // then return the new context
   return current->cp;
+}
+
+int sys_execve(const char *fname, char * const argv[], char *const envp[]) {
+  context_uload(current, fname, argv, envp);
+  switch_boot_pcb();
+  yield();
+
+  return -1;
 }
