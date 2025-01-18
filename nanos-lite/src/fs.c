@@ -41,9 +41,10 @@ static Finfo file_table[] __attribute__((used)) = {
 #include "files.h"
 };
 
-#define NR_FILES 100
+#define NR_FILES 200
 int fs_open(const char *path, int flags, int mode) {
   for(int i = 3; i < NR_FILES; i++) {
+    //printf("path: %s, file_name: %s\n", path, file_table[i].name);
     if(strcmp(path, file_table[i].name) == 0) {
       //printf("Found file %s, index is %d.\n", path, i);
       return i;

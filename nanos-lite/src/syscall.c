@@ -30,11 +30,12 @@ void do_syscall(Context *c) {
   a[0] = c->GPR1; // GPR1 stores system num
 
   switch (a[0]) {
-    case SYS_exit:printf("Do syscall exit, GPRx is %d\n", c->GPRx);break;
+    case SYS_exit:
+      //c->GPRx = sys_execve((char*)c->GPR2, (char* const*)c->GPR3, (char* const*)c->GPR4);
+      printf("Do syscall exit, GPRx is %d\n", c->GPRx);break;
     case SYS_execve:
-      c->GPRx = sys_execve((char*)c->GPR2, (char* const*)c->GPR3, (char* const*)c->GPR4);
+      c->GPRx = sys_execve((char*)c->GPR2, (char* const*)c->GPR3, (char* const*)c->GPR4);break;
       while(1);
-      break;
     case SYS_yield:yield();break;
     case SYS_write:
       c->GPRx = fs_write(c->GPR2, (char*)c->GPR3, c->GPR4);break;
