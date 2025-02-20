@@ -10,6 +10,7 @@ static word_t *csr_id_instr2address(word_t imm) {
         case 0x342: return &(cpu.csr.mcause);
         case 0x300: return &(cpu.csr.mstatus);
         case 0x305: return &(cpu.csr.mtvec);
+        case 0x180: return &(cpu.csr.satp);
         default: panic("unknown csr");
     }
 }

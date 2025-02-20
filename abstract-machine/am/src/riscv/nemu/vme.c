@@ -9,7 +9,7 @@ static void (*pgfree_usr)(void*) = NULL;
 static int vme_enable = 0;
 
 static Area segments[] = {      // Kernel memory mappings
-  NEMU_PADDR_SPACE
+    NEMU_PADDR_SPACE
 };
 
 #define USER_SPACE RANGE(0x40000000, 0x80000000)
@@ -68,6 +68,24 @@ void __am_switch(Context *c) {
 }
 
 void map(AddrSpace *as, void *va, void *pa, int prot) {
+  // get page number of first and second page table
+  uint32_t vpn_0 = ((uintptr_t)va >> 12) & 0x3ff;
+  uint32_t vpn_1 = ((uintptr_t)va >> 22) & 0x3ff;
+
+  PTE* page_dir_entry = (PTE*)as->ptr + vpn_1;
+  // if page dir entry is not exist, create the page table
+  if(!(*page_dir_entry & PTE_V)) {
+    PTE* page_table_base = (PTE*)pgalloc_usr(PGSIZE);
+    *page_dir_entry = ((PTE)page_table_base) | PTE_V;
+    PTE* page_table_entry = page_table_base + vpn_0;
+    *page_table_entry = ((uintptr_t)pa & 0xfffff000) | PTE_V | PTE_R | PTE_W | PTE_X;
+  }
+  else {
+  // if page dir entry is exist, get address of the page table
+  PTE* page_table_base = (PTE*)(*page_dir_entry & 0xfffff000);
+  PTE* page_table_entry = page_table_base + vpn_0;
+  *page_table_entry = ((uintptr_t)pa & 0xfffff000) | PTE_V | PTE_R | PTE_W | PTE_X;
+  }
 }
 
 Context *ucontext(AddrSpace *as, Area kstack, void *entry) {

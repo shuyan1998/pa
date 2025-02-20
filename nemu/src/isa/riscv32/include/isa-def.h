@@ -9,7 +9,8 @@ typedef struct {
   uint32_t mcause;
   uint32_t mstatus;
   vaddr_t mepc;
-  vaddr_t mtvec;
+  uint32_t mtvec;
+  uint32_t satp;
 }riscv32_CSRs;
 
 typedef struct {
@@ -80,6 +81,6 @@ typedef struct {
   } instr;
 } riscv32_ISADecodeInfo;
 
-#define isa_mmu_check(vaddr, len, type) (MMU_DIRECT)
+#define isa_mmu_check(vaddr, len, type) ((cpu.csr.satp & 0x80000000) >> 31) == 1 ? MMU_TRANSLATE : MMU_DIRECT
 
 #endif

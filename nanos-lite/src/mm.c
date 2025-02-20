@@ -1,4 +1,6 @@
+#include "klib-macros.h"
 #include <memory.h>
+#include <stdint.h>
 
 static void *pf = NULL;
 
@@ -9,7 +11,17 @@ void* new_page(size_t nr_page) {
 
 #ifdef HAS_VME
 static void* pg_alloc(int n) {
-  return NULL;
+  size_t nr_page = ROUNDDOWN(n,PGSIZE) / PGSIZE;
+  if (n <= 0) {
+    panic("Phsyical page alloc invalid!");
+  }
+  void* pg_ptr = new_page(nr_page);
+  for(int i = 0; i < nr_page; i++){
+    for(int j = 0; j < PGSIZE; j++){
+      *(char*)((uintptr_t)pg_ptr + i * PGSIZE + j) = 0;
+    }
+  }
+  return pg_ptr;
 }
 #endif
 
