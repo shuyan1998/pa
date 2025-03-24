@@ -1,4 +1,6 @@
+#include "am.h"
 #include "klib-macros.h"
+#include "proc.h"
 #include <memory.h>
 #include <stdint.h>
 
@@ -31,6 +33,22 @@ void free_page(void *p) {
 
 /* The brk() system call handler. */
 int mm_brk(uintptr_t brk) {
+  extern PCB *current;
+  extern char _end;
+
+  if(current->max_brk == 0){
+    current->max_brk = (uintptr_t)&_end;
+  }
+  void *va = NULL, *pa = NULL;
+  void* begin = (void*)current->max_brk;
+  void* end = (void*)brk;
+  int pgsz = ((uintptr_t)end - (uintptr_t)begin  + PGSIZE - 1)/ PGSIZE;
+  if(brk >= current->max_brk) {
+    for(int i = 0; i < pgsz; i++){
+      map(&current->as, va + i*PGSIZE, pa, 0);
+    }
+    current->max_brk = brk;
+  }
   return 0;
 }
 

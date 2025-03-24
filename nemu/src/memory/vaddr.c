@@ -31,5 +31,5 @@ word_t vaddr_read(vaddr_t addr, int len) {
 
 void vaddr_write(vaddr_t addr, int len, word_t data) {
   paddr_t paddr = vaddr2paddr(addr, len, MEM_TYPE_WRITE);
-  paddr_write(addr, len, data);
+  paddr_write(paddr, len, data);
 }

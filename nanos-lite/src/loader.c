@@ -1,3 +1,4 @@
+#include "am.h"
 #include "fs.h"
 #include <proc.h>
 #include <memory.h>
@@ -26,6 +27,10 @@
 # error Unsupported ISA
 #endif
 
+static inline void set_satp(void *pdir) {
+  uintptr_t mode = 1ul << (__riscv_xlen - 1);
+  asm volatile("csrw satp, %0" : : "r"(mode | ((uintptr_t)pdir >> 12)));
+}
 
 static uintptr_t loader(PCB *pcb, const char *filename) {
   int fd = fs_open(filename, 0, 0);
@@ -47,7 +52,17 @@ static uintptr_t loader(PCB *pcb, const char *filename) {
     assert(fs_read(fd, &phdr[i], elf.e_phentsize) == elf.e_phentsize);
     // load
     if (phdr[i].p_type == PT_LOAD) {
+      void *va = (void*)phdr[i].p_vaddr;
+      void* pa = NULL;
+      int pgsz = (phdr[i].p_memsz + PGSIZE - 1) / PGSIZE;
+      printf("pgsz is %d\n", pgsz);
+
+      for(int j=0; j < pgsz; j++){
+        map(&pcb->as, va + j*PGSIZE, pa, 0);
+      }
       fs_lseek(fd, phdr[i].p_offset, 0);
+
+      set_satp(pcb->as.ptr);
       assert(fs_read(fd, (void*)phdr[i].p_vaddr, phdr[i].p_filesz) == phdr[i].p_filesz);
       memset((void*)phdr[i].p_vaddr + phdr[i].p_filesz, 0, phdr[i].p_memsz - phdr[i].p_filesz);
     }
@@ -66,7 +81,7 @@ void naive_uload(PCB *pcb, const char *filename) {
 }
 
 void context_uload(PCB *pcb, const char *filename, char *const argv[], char *const envp[]) {
-    uintptr_t entry = loader(pcb, filename);
+    protect(&pcb->as);
 
     // 计算argv和envp的长度
     int argc = 0;
@@ -75,8 +90,10 @@ void context_uload(PCB *pcb, const char *filename, char *const argv[], char *con
     }
 
     int envc = 0;
-    while (envp[envc] != NULL) {
+    if(envp != NULL){
+      while (envp[envc] != NULL) {
         envc++;
+      }
     }
 
     // 计算所需的栈空间大小
@@ -96,6 +113,9 @@ void context_uload(PCB *pcb, const char *filename, char *const argv[], char *con
     // 调整栈指针到16字节对齐
     uintptr_t sp = (uintptr_t)new_page(8) - stack_size;
     sp = (sp - 16) & ~0xF;  // 16字节对齐
+    for(int i = 0; i < 8 ; i++) {
+      map(&pcb->as, pcb->as.area.end - 8*PGSIZE + i*PGSIZE, (void *)((uintptr_t)sp + i * PGSIZE), 0);
+    }
 
     // 填充字符串
     char *str_ptr = (char *)(sp + (argc + 1) * sizeof(uintptr_t) + (envc + 1) * sizeof(uintptr_t) + sizeof(int));
@@ -132,9 +152,10 @@ void context_uload(PCB *pcb, const char *filename, char *const argv[], char *con
     }
     stack_envp[envc] = 0;
     
+    uintptr_t entry = loader(pcb, filename);
 
     // 创建上下文
-    Context *uc = ucontext(&pcb->as, (Area){(void *)sp, (void *)pcb->stack}, (void *)entry);
+    Context *uc = ucontext(&pcb->as, (Area){pcb->stack, pcb->stack + sizeof(pcb->stack)}, (void *)entry);
 
     // 保存上下文指针到PCB
     pcb->cp = uc;

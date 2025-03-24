@@ -171,7 +171,7 @@ APPS = busybox nterm
 TESTS = dummy exec-test
 
 fsimg: $(addprefix apps/, $(APPS)) $(addprefix tests/, $(TESTS))
-	-for t in $^; do $(MAKE) -s -C $(NAVY_HOME)/$$t install; done
+	-for t in $^; do $(MAKE) VME=1 -s -C $(NAVY_HOME)/$$t install; done
 
 RAMDISK = build/ramdisk.img
 RAMDISK_H = build/ramdisk.h

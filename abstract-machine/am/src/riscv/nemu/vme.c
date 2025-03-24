@@ -1,3 +1,4 @@
+#include "riscv/riscv.h"
 #include <am.h>
 #include <nemu.h>
 #include <klib.h>
@@ -9,7 +10,7 @@ static void (*pgfree_usr)(void*) = NULL;
 static int vme_enable = 0;
 
 static Area segments[] = {      // Kernel memory mappings
-    NEMU_PADDR_SPACE
+  NEMU_PADDR_SPACE
 };
 
 #define USER_SPACE RANGE(0x40000000, 0x80000000)
@@ -72,6 +73,10 @@ void map(AddrSpace *as, void *va, void *pa, int prot) {
   uint32_t vpn_0 = ((uintptr_t)va >> 12) & 0x3ff;
   uint32_t vpn_1 = ((uintptr_t)va >> 22) & 0x3ff;
 
+  if(pa == NULL){
+    pa = pgalloc_usr(PGSIZE);
+  }
+
   PTE* page_dir_entry = (PTE*)as->ptr + vpn_1;
   // if page dir entry is not exist, create the page table
   if(!(*page_dir_entry & PTE_V)) {
@@ -91,6 +96,7 @@ void map(AddrSpace *as, void *va, void *pa, int prot) {
 Context *ucontext(AddrSpace *as, Area kstack, void *entry) {
   Context *uc = (Context*)kstack.end - 1;
   uc->mepc = (uintptr_t)entry;
+  uc->pdir = as->ptr;
 
   return uc;
 }

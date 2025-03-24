@@ -8,6 +8,7 @@
 #include <fs.h>
 #include <stdio.h>
 #include <sys/time.h>
+#include <memory.h>
 
 #define NR_FILES 24
 void sys_write(intptr_t buf, int count) {
@@ -31,6 +32,7 @@ void do_syscall(Context *c) {
 
   switch (a[0]) {
     case SYS_exit:
+      halt(0);
       //c->GPRx = sys_execve((char*)c->GPR2, (char* const*)c->GPR3, (char* const*)c->GPR4);
       printf("Do syscall exit, GPRx is %d\n", c->GPRx);break;
     case SYS_execve:
@@ -39,7 +41,7 @@ void do_syscall(Context *c) {
     case SYS_yield:yield();break;
     case SYS_write:
       c->GPRx = fs_write(c->GPR2, (char*)c->GPR3, c->GPR4);break;
-    case SYS_brk:c->GPRx = 0;break;
+    case SYS_brk:c->GPRx = mm_brk(c->GPR2);break;
     case SYS_open:
       c->GPRx = fs_open((char*)c->GPR2, c->GPR3, c->GPR4);break;
     case SYS_close:

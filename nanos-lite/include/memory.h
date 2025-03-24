@@ -10,6 +10,7 @@
 #define PG_ALIGN __attribute((aligned(PGSIZE)))
 
 void* new_page(size_t);
+int mm_brk(uintptr_t brk);
 
 size_t ramdisk_read(void *buf, size_t offset, size_t len);
 size_t ramdisk_write(const void *buf, size_t offset, size_t len);

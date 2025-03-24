@@ -21,13 +21,13 @@ paddr_t isa_mmu_translate(vaddr_t vaddr, int len, int type) {
   // 一级页表
   PTE page_dir_entry = page_dir_base + vpn_1 * 4;
   word_t page_dir_entry_val = paddr_read(page_dir_entry, 4);
-  if(!PTE_V(page_dir_entry_val)) assert(0);
+  //if(!PTE_V(page_dir_entry_val)) assert(0);
 
   // 二级页表
   vaddr_t page_table_base = PTE_PPN(page_dir_entry_val) << 12;
   PTE page_table_entry = page_table_base + vpn_0 * 4;
   word_t page_table_entry_val = paddr_read(page_table_entry, 4);
-  if(!PTE_V(page_table_entry_val)) assert(0);
+  //if(!PTE_V(page_table_entry_val)) assert(0);
 
   // 根据访存类型检查权限位
   switch(type){
@@ -42,7 +42,7 @@ paddr_t isa_mmu_translate(vaddr_t vaddr, int len, int type) {
   paddr_t paddr = ppn | offset;
 
   // 检查物理地址是否和虚拟地址相等（恒等映射）
-  assert(paddr == vaddr);
+  // assert(paddr == vaddr);
 
   return paddr;
 

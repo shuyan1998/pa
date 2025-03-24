@@ -54,10 +54,6 @@ static long load_img() {
   return size;
 }
 
-static long parse_elf() {
-  
-}
-
 static int parse_args(int argc, char *argv[]) {
   const struct option table[] = {
     {"batch"    , no_argument      , NULL, 'b'},
