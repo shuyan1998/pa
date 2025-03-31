@@ -20,6 +20,7 @@ typedef struct {
   riscv32_CSRs csr;
 
   vaddr_t pc;
+  bool INTR;
 } riscv32_CPU_state;
 
 // decode

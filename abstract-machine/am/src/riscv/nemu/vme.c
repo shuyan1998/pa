@@ -27,11 +27,14 @@ static inline uintptr_t get_satp() {
 }
 
 bool vme_init(void* (*pgalloc_f)(int), void (*pgfree_f)(void*)) {
+  printf("4444444444444444\n");
   pgalloc_usr = pgalloc_f;
   pgfree_usr = pgfree_f;
 
+  printf("5555555555555555555\n");
   kas.ptr = pgalloc_f(PGSIZE);
 
+  printf("22222222222\n");
   int i;
   for (i = 0; i < LENGTH(segments); i ++) {
     void *va = segments[i].start;
@@ -42,6 +45,7 @@ bool vme_init(void* (*pgalloc_f)(int), void (*pgfree_f)(void*)) {
 
   set_satp(kas.ptr);
   vme_enable = 1;
+  printf("3333333333333333333\n");
 
   return true;
 }
@@ -93,10 +97,13 @@ void map(AddrSpace *as, void *va, void *pa, int prot) {
   }
 }
 
+#define MSTATUS_MPIE_MASK 0x00000080
+#define MSTATUS_MIE_MASK 0x00000008
 Context *ucontext(AddrSpace *as, Area kstack, void *entry) {
   Context *uc = (Context*)kstack.end - 1;
   uc->mepc = (uintptr_t)entry;
   uc->pdir = as->ptr;
+  uc->mstatus |= MSTATUS_MIE_MASK;
 
   return uc;
 }

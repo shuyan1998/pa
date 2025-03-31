@@ -1,12 +1,14 @@
 #include "am.h"
 #include <common.h>
+#include "debug.h"
 #include "proc.h"
 #include "syscall.h"
 
 static Context* do_event(Event e, Context* c) {
   switch (e.event) {
     case EVENT_YIELD:
-      //printf("Handle yeild event\n");
+    case EVENT_IRQ_TIMER:
+      Log("Handle yield and timer interupt event");
       return schedule(c);
     case EVENT_SYSCALL:
       do_syscall(c);break;
@@ -17,6 +19,6 @@ static Context* do_event(Event e, Context* c) {
 }
 
 void init_irq(void) {
-  Log("Initializing interrupt/exception handler...");
+  //Log("Initializing interrupt/exception handler...");
   cte_init(do_event);
 }

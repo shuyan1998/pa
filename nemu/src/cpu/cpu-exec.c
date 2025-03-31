@@ -98,6 +98,12 @@ void fetch_decode(Decode *s, vaddr_t pc) {
 #endif
 }
 
+bool is_mtvec_zero() {
+  unsigned long mtvec_value;
+  asm volatile("csrw %0, mtvec" : "=r"(mtvec_value));
+  return mtvec_value == 0;
+}
+
 /* Simulate how the CPU works. */
 void cpu_exec(uint64_t n) {
   g_print_step = (n < MAX_INSTR_TO_PRINT);
@@ -118,6 +124,15 @@ void cpu_exec(uint64_t n) {
     trace_and_difftest(&s, cpu.pc);
     if (nemu_state.state != NEMU_RUNNING) break;
     IFDEF(CONFIG_DEVICE, device_update());
+
+    if(!is_mtvec_zero()){
+      word_t intr = isa_query_intr();
+      if (intr != INTR_EMPTY) {
+        printf("////////////////\n");
+        cpu.pc = isa_raise_intr(intr, cpu.pc);
+      }
+    }
+    
   }
 
   uint64_t timer_end = get_time();
