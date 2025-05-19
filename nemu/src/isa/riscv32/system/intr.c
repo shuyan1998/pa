@@ -7,25 +7,27 @@ word_t isa_raise_intr(word_t NO, vaddr_t epc) {
    * Then return the address of the interrupt/exception vector.
    */
 
-  // epc += 4;
+  if(NO == 0x80000007){
+    epc = epc;
+  }
+  else{
+    epc += 4;
+  }
   // printf("epc: %x\n", epc);
 
   // IFDEF(CONFIG_ETRACE, printf("Exception NO: %d\n", NO));
   cpu.csr.mcause = NO;
   cpu.csr.mepc = epc;
+  printf("=1 epc is %x\n",epc);
 
-
-  if(NO == 0x80000007){
-    // set mstatus.MIE to mstatus.MPIE
-    if(cpu.csr.mstatus & MSTATUS_MIE_MASK) {
-      cpu.csr.mstatus |= MSTATUS_MPIE_MASK;
-    }else {
-      cpu.csr.mstatus &= MSTATUS_MPIE_MASK;
-    }
-    // set mstatus.MIE to 0
-    cpu.csr.mstatus &= ~MSTATUS_MIE_MASK;
+  // set mstatus.MIE to mstatus.MPIE
+  if(cpu.csr.mstatus & MSTATUS_MIE_MASK) {
+    cpu.csr.mstatus |= MSTATUS_MPIE_MASK;
+  }else {
+    cpu.csr.mstatus &= MSTATUS_MPIE_MASK;
   }
-  printf("Address is %x\n", cpu.csr.mtvec);
+  // set mstatus.MIE to 0
+  cpu.csr.mstatus &= ~MSTATUS_MIE_MASK;
   
   return cpu.csr.mtvec;
 }

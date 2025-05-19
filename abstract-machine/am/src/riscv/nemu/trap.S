@@ -21,15 +21,49 @@ f(30) f(31)
 #define PUSH(n) STORE concat(x, n), (n * XLEN)(sp);
 #define POP(n)  LOAD  concat(x, n), (n * XLEN)(sp);
 
-#define CONTEXT_SIZE  ((32 + 3 + 1) * XLEN)
+#define CONTEXT_SIZE  ((32 + 4 + 1) * XLEN)
 #define OFFSET_SP     ( 2 * XLEN)
 #define OFFSET_CAUSE  (32 * XLEN)
 #define OFFSET_STATUS (33 * XLEN)
 #define OFFSET_EPC    (34 * XLEN)
+#define OFFSET_NP     (36 * XLEN)
+
+#define KERNEL 1
+#define USER   0
 
 .align 3
 .globl __am_asm_trap
 __am_asm_trap:
+  csrrw sp, mscratch, sp   // (1) atomically exchange sp and mscratch
+  bnez sp, save_np_user    // (2) take the branch if we trapped from user
+  csrr sp, mscratch        // (3) if we trapped from kernel, restore the original sp
+
+save_np_kernel:
+  addi sp, sp, -2*XLEN
+  STORE t0, XLEN(sp)
+  STORE t1, 0(sp)
+
+  lui t0, KERNEL
+  STORE t0, OFFSET_NP(sp)
+
+  LOAD t0, XLEN(sp)
+  LOAD t1, 0(sp)
+  addi sp, sp, 2*XLEN
+  jal save_context
+
+save_np_user:
+  addi sp, sp, -2*XLEN
+  STORE t0, XLEN(sp)
+  STORE t1, 0(sp)
+
+  lui t0, USER
+  STORE t0, OFFSET_NP(sp)
+
+  LOAD t0, XLEN(sp)
+  LOAD t1, 0(sp)
+  addi sp, sp, 2*XLEN
+
+save_context:
   addi sp, sp, -CONTEXT_SIZE
 
   MAP(REGS, PUSH)
@@ -37,10 +71,12 @@ __am_asm_trap:
   csrr t0, mcause
   csrr t1, mstatus
   csrr t2, mepc
+  csrr t3, mscratch
 
   STORE t0, OFFSET_CAUSE(sp)
   STORE t1, OFFSET_STATUS(sp)
   STORE t2, OFFSET_EPC(sp)
+  STORE t3, OFFSET_SP(sp)
 
   # set mstatus.MPRV to pass difftest
   li a0, (1 << 17)
@@ -53,10 +89,19 @@ __am_asm_trap:
 
   LOAD t1, OFFSET_STATUS(sp)
   LOAD t2, OFFSET_EPC(sp)
-  csrw mstatus, t1
+  
   csrw mepc, t2
+  csrw mstatus, t1
 
+  LOAD t0, OFFSET_NP(sp)
+  bnez t0, restore_ctx // KERNEL
+  addi t1, sp, CONTEXT_SIZE
+  csrw mscratch, t1
+
+restore_ctx:
   MAP(REGS, POP)
 
-  addi sp, sp, CONTEXT_SIZE
+  // addi sp, sp, CONTEXT_SIZE
+  LOAD sp, OFFSET_SP(sp)
+
   mret

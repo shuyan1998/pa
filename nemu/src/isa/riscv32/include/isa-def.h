@@ -8,6 +8,7 @@
 typedef struct {
   uint32_t mcause;
   uint32_t mstatus;
+  uint32_t mscratch;
   vaddr_t mepc;
   uint32_t mtvec;
   uint32_t satp;

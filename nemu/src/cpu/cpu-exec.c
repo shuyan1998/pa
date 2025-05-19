@@ -15,9 +15,9 @@
  * You can modify this value as you want.
  */
 #define MAX_INSTR_TO_PRINT 50
+extern char _heap_start;
 
-
-CPU_state cpu = {.csr.mstatus=0x1800};
+CPU_state cpu = {.csr.mstatus=0x1800, .csr.mscratch=0x82477000};
 uint64_t g_nr_guest_instr = 0;
 static uint64_t g_timer = 0; // unit: us
 static bool g_print_step = false;
@@ -98,12 +98,6 @@ void fetch_decode(Decode *s, vaddr_t pc) {
 #endif
 }
 
-bool is_mtvec_zero() {
-  unsigned long mtvec_value;
-  asm volatile("csrw %0, mtvec" : "=r"(mtvec_value));
-  return mtvec_value == 0;
-}
-
 /* Simulate how the CPU works. */
 void cpu_exec(uint64_t n) {
   g_print_step = (n < MAX_INSTR_TO_PRINT);
@@ -125,10 +119,11 @@ void cpu_exec(uint64_t n) {
     if (nemu_state.state != NEMU_RUNNING) break;
     IFDEF(CONFIG_DEVICE, device_update());
 
-    if(!is_mtvec_zero()){
+    #define MSTATUS_MIE 0x8
+    if(cpu.csr.mstatus & MSTATUS_MIE){
+      //printf("pc is %x\n", cpu.pc);
       word_t intr = isa_query_intr();
       if (intr != INTR_EMPTY) {
-        printf("////////////////\n");
         cpu.pc = isa_raise_intr(intr, cpu.pc);
       }
     }

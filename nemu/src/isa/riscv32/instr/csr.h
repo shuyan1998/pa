@@ -10,6 +10,7 @@ static word_t *csr_id_instr2address(word_t imm) {
         case 0x342: return &(cpu.csr.mcause);
         case 0x300: return &(cpu.csr.mstatus);
         case 0x305: return &(cpu.csr.mtvec);
+        case 0x340: return &(cpu.csr.mscratch);
         case 0x180: return &(cpu.csr.satp);
         default: panic("unknown csr");
     }
@@ -39,7 +40,18 @@ def_EHelper(ecall) {
     rtl_j(s, trap_vec);
 }
 
+#define MSTATUS_MPIE_MASK 0x00000080
+#define MSTATUS_MIE_MASK 0x00000008
 def_EHelper(mret) {
+    if(cpu.csr.mstatus & MSTATUS_MPIE_MASK){
+        cpu.csr.mstatus |= MSTATUS_MIE_MASK;
+    }else {
+        cpu.csr.mstatus &= ~MSTATUS_MIE_MASK;
+    }
+    cpu.csr.mstatus |= MSTATUS_MPIE_MASK;
     //cpu.pc = cpu.csr.mepc + 4;
-    rtl_j(s, cpu.csr.mepc + 4);
+    //printf("mret pc is %x\n", cpu.csr.mepc + 4);
+    printf("=3 mepc is %x\n", cpu.csr.mepc);
+
+    rtl_j(s, cpu.csr.mepc);
 }

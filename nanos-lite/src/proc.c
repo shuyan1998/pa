@@ -14,6 +14,7 @@ void switch_boot_pcb() {
 
 void hello_fun(void *arg) {
   int j = 1;
+  
   while (1) {
     Log("Hello World from Nanos-lite with arg '%s' for the %dth time!", (char*)arg, j);
     j ++;
@@ -22,21 +23,31 @@ void hello_fun(void *arg) {
 }
 
 void context_kload(PCB *pcb, void (*entry)(void *), void *arg){
-  Context *c = kcontext((Area){pcb->stack, pcb->stack + 1}, entry, arg);
+  Context *c = kcontext((Area){pcb->stack, pcb->stack + sizeof(pcb->stack)}, entry, arg);
+  //printf("jjj pdir is %x\n", ((Context*)0x8244df71)->pdir);
+  //c->pdir = NULL;
+  //printf("上下文地址 %x, entry地址 %x\n", c, c->mepc);
   pcb->cp = c;
+
+  //printf("c is %x, pcb addr is %x, pdir add is %x\n", c, &pcb->cp, &c->pdir);
+  //printf("ggg pdir is %x\n", ((Context*)0x8244df71)->pdir);
 }
 
 void init_proc() {
-  // context_kload(&pcb[0], hello_fun, "A");
-  // context_kload(&pcb[1], hello_fun, "B");
+  //context_kload(&pcb[0], hello_fun, "A");
+  //printf("ccc pdir is %x\n", ((Context*)0x8244df71)->pdir);
+  //context_kload(&pcb[1], hello_fun, "B");
+  //printf("ddd pdir is %x\n", ((Context*)0x8244df71)->pdir);
   char* argv[] = {"/bin/dummy", NULL};
   char* envp[] = {"lalala=test", NULL};
   //context_uload(&pcb[1], "/bin/exec-test", argv, envp);
   context_uload(&pcb[0], "/bin/dummy", argv, NULL);
+  //context_uload(&pcb[1], "/bin/dummy", argv, NULL);
   //context_uload(&pcb[0], "/bin/pal", argv, NULL);
   switch_boot_pcb();
 
   Log("Initializing processes...");
+  //printf("bbb pdir is %x\n", ((Context*)0x8244df71)->pdir);
 
   // load program here
   // naive_uload(NULL, "/bin/exec-test");

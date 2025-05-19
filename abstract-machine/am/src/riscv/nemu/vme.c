@@ -23,6 +23,7 @@ static inline void set_satp(void *pdir) {
 static inline uintptr_t get_satp() {
   uintptr_t satp;
   asm volatile("csrr %0, satp" : "=r"(satp));
+  printf("satp is %x\n", satp);
   return satp << 12;
 }
 
@@ -44,6 +45,7 @@ bool vme_init(void* (*pgalloc_f)(int), void (*pgfree_f)(void*)) {
   }
 
   set_satp(kas.ptr);
+  printf("kas is %x\n", kas.ptr);
   vme_enable = 1;
   printf("3333333333333333333\n");
 
@@ -64,10 +66,13 @@ void unprotect(AddrSpace *as) {
 
 void __am_get_cur_as(Context *c) {
   c->pdir = (vme_enable ? (void *)get_satp() : NULL);
+  printf("am_get pdir is %x\n", c->pdir);
 }
 
 void __am_switch(Context *c) {
+  printf("address switch %x\n", &c->pdir);
   if (vme_enable && c->pdir != NULL) {
+    printf("hahahahahhahahahah pdir is %x\n", c->pdir);
     set_satp(c->pdir);
   }
 }
@@ -103,7 +108,9 @@ Context *ucontext(AddrSpace *as, Area kstack, void *entry) {
   Context *uc = (Context*)kstack.end - 1;
   uc->mepc = (uintptr_t)entry;
   uc->pdir = as->ptr;
-  uc->mstatus |= MSTATUS_MIE_MASK;
+  uc->np = 0;
+  uc->gpr[2] = (uintptr_t)kstack.end - 36*4;
+  uc->mstatus |= MSTATUS_MPIE_MASK;
 
   return uc;
 }

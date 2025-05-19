@@ -1,4 +1,5 @@
 #include <stdint.h>
+#include <stdio.h>
 #include <stdlib.h>
 
 #ifdef __ISA_NATIVE__
@@ -9,9 +10,13 @@
 extern int _syscall_(int, uintptr_t, uintptr_t, uintptr_t);
 
 int main() {
-  int* ptr = (int*)malloc(10 * sizeof(int));
-  for(int i = 0; i < 10; i++) {
-    ptr[i] = i;
+  // int* ptr = (int*)malloc(10 * sizeof(int));
+  // for(int i = 0; i < 10; i++) {
+  //   ptr[i] = i;
+  // }
+  // printf("++++++++++ Dummy test executed.+++++++++++\n");
+  while(1){
+    _syscall_(SYS_yield, 0, 0, 0);
   }
   return _syscall_(SYS_yield, 0, 0, 0);
 }

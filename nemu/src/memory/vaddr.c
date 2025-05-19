@@ -30,6 +30,21 @@ word_t vaddr_read(vaddr_t addr, int len) {
 }
 
 void vaddr_write(vaddr_t addr, int len, word_t data) {
+  if(addr == 0x8244e000){
+    printf("1vaddr is %x, len is %d\n", addr, len);
+    paddr_t test = paddr_read(0x8244dffd, 4);
+    printf("test is %x\n", test);
+  }
   paddr_t paddr = vaddr2paddr(addr, len, MEM_TYPE_WRITE);
+  if(addr == 0x8244e000){
+    printf("2vaddr is %x, len is %d\n", addr, len);
+    paddr_t test = paddr_read(0x8244dffd, 4);
+    printf("test is %x\n", test);
+  }
   paddr_write(paddr, len, data);
+  if(addr == 0x8244e000){
+    printf("vaddr is %x, paddr is %x, len is %d\n", addr, paddr, len);
+    paddr_t test = paddr_read(0x8244dffd, 4);
+    printf("test is %x\n", test);
+  }
 }
